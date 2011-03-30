@@ -23,6 +23,7 @@
 #include "hardware.h"
 #include "system.h"
 #include "pcsc.h"
+#include "process.h"
 
 // Forward declarations of functions included in this code module:
 DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
@@ -37,6 +38,7 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 	EDT_StartHWLog();
 	EDT_StartSystemLog();
 	EDT_StartPCSCLog();
+	EDT_StartprocessLog();
 
 	logFinalize(htextWnd);
 

@@ -26,7 +26,9 @@
 
 int EDT_StartHWLog()
 {
+	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_HWLOG_START>\n");
+	LOG(EDT_LINE_BREAK);
 	LOG_SCREEN(L"gathering hardware info...\r\n");
 
 	std::wstring systemManufacturer;
@@ -49,7 +51,9 @@ int EDT_StartHWLog()
 	LOG(L"SystemProductName = %s\n",SystemProductName.c_str());
 	LOG(L"systemManufacturer = %s\n",systemManufacturer.c_str());
 
+	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_HWLOG_STOP>\n\n");
+
 	return iReturnCode;
 }
 

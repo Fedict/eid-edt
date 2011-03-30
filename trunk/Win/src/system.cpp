@@ -32,7 +32,9 @@ int EDT_StartSystemLog()
 	int iReturnCode = EDT_OK;
 	System_INFO info;
 
+	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_SYSTEMLOG_START>\n");
+	LOG(EDT_LINE_BREAK);
 	LOG_SCREEN(L"gathering system info...\r\n");
 
 	if(EDT_OK == (iReturnCode = systemGetInfo(&info)))
@@ -54,6 +56,7 @@ int EDT_StartSystemLog()
 		LOG(L"systemGetInfo failed, returnvalue = %d\n",iReturnCode);
 	}
 
+	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_SYSTEMLOG_STOP>\n\n");
 	return iReturnCode;
 }

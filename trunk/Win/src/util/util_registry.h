@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses/.
 
 **************************************************************************** */
-#ifndef __DIAGLIB_REGISTRY_H__
-#define __DIAGLIB_REGISTRY_H__
+#ifndef __EDT_UTIL_REGISTRY_H__
+#define __EDT_UTIL_REGISTRY_H__
 
 #include <string>
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,4 +26,4 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 int registryGetValue(HKEY hRootKey, const wchar_t *wzKey, const wchar_t *wzName, std::wstring *ValueStr);
 
-#endif //__DIAGLIB_REGISTRY_H__
+#endif //__EDT_UTIL_REGISTRY_H__
