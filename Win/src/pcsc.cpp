@@ -79,6 +79,8 @@ int EDT_StartPCSCLog()
 		LOG_ERROR(L"PCSC load library test failed\n");
 	}
 
+	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_PCSCLOG_STOP>\n\n");
+
 	return iReturnCode;
 }
