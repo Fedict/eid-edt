@@ -34,47 +34,49 @@ int EDT_StartPCSCLog()
 	int iReturnCode = EDT_OK;
 	//int iFunctionCode = EDT_OK;
 	bool pcscAvailable = false;
+	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_PCSCLOG_START>\n");
+	LOG(EDT_LINE_BREAK);
 	LOG_SCREEN(L"testing pcsc...\r\n");
 
 	//load the pcsc lib
-	LOG(L"pcsctest1: PCSC load library\n");
+	LOG(L"PCSC load library test\n");
 	iReturnCode = EDT_pcscLoad();
 	if(iReturnCode == EDT_OK){
-		LOG(L"pcsctest1: PCSC load library succeeded\n------\n");
+		LOG(L"PCSC load library test succeeded\n------\n");
 		//try to establish and release a connection
-		LOG(L"pcsctest2: EDT_pcscEstablishContext\n");
+		LOG(L"PCSC EstablishContext test\n");
 		iReturnCode = EDT_pcscEstablishContext();
 		if(iReturnCode == EDT_OK){
-			LOG(L"pcsctest2: EDT_pcscEstablishContext succeeded\n------\n");
+			LOG(L"PCSC EstablishContext test succeeded\n------\n");
 			//try to get the list of connected readers
-			LOG(L"pcsctest3: EDT_pcscLogReaderList\n");
+			LOG(L"PCSC Log ReaderList test\n");
 			iReturnCode = EDT_pcscLogReaderList();
 			if(iReturnCode == EDT_OK){
-				LOG(L"pcsctest3: EDT_pcscLogReaderList succeeded\n------\n");
+				LOG(L"PCSC Log ReaderList test succeeded\n------\n");
 				//try to get the list of connected cards
-				LOG(L"pcsctest4: EDT_pcscLogCardList\n");
+				LOG(L"PCSC log CardList test\n");
 				iReturnCode = EDT_pcscLogCardList();				
 				if(iReturnCode == EDT_OK){
-					LOG(L"pcsctest4: EDT_pcscLogCardList succeeded\n------\n");
+					LOG(L"PCSC log CardList test succeeded\n------\n");
 
 
 				}
 				else{
-					LOG_ERROR(L"pcsctest4: EDT_pcscLogCardList failed\n");
+					LOG_ERROR(L"PCSC log CardList test failed\n");
 				}
 			}
 			else{
-				LOG_ERROR(L"pcsctest3: EDT_pcscLogReaderList failed\n");
+				LOG_ERROR(L"PCSC Log ReaderList test failed\n");
 			}
 		}
 		else{
-			LOG_ERROR(L"pcsctest2: EDT_pcscEstablishContext failed\n");
+			LOG_ERROR(L"PCSC EstablishContext test failed\n");
 		}
 	}
 	else
 	{
-		LOG_ERROR(L"pcsctest1: PCSC load library failed\n");
+		LOG_ERROR(L"PCSC load library test failed\n");
 	}
 
 	LOG(L"<EDT_PCSCLOG_STOP>\n\n");

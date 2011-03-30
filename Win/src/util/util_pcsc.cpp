@@ -628,8 +628,9 @@ int EDT_pcscLogCardReaderList(bool logCard)
 						std::wstring atr;
 						if(EDT_OK == (iReturnCode = GetATR(hCard, &atr)))
 						{
-							LOG(L"GetATR succeeded, ATR = %s\n",atr.c_str());
+							//LOG(L"GetATR succeeded, ATR = %s\n",atr.c_str());
 							//Do the card tests in sequence here
+							LOG(L"LogCardData start\n");
 							if(EDT_OK == LogCardData(hCard))
 							{
 								LOG(L"LogCardData succeeded\n");
@@ -638,7 +639,7 @@ int EDT_pcscLogCardReaderList(bool logCard)
 							{
 								LOG_ERROR(L"LogCardData failed");
 							}
-					
+							LOG(L"ReadCard start\n");
 							if(EDT_OK == ReadCard(hCard))
 							{
 								LOG(L"ReadCard succeeded\n");
@@ -1203,6 +1204,7 @@ int GetATR(SCARDHANDLE hCard, std::wstring *atr)
 				atr->append(buff);
 			}
 		}
+		LOG(L"ATR = %s\n",atr->c_str());
 	}
 	LOG_EXIT(iReturnCode);
 	return iReturnCode;
