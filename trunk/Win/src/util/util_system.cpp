@@ -555,7 +555,9 @@ std::wstring GetOSDesc(const OSVERSIONINFOEX &osv)
 
 std::wstring GetOSArchitecture()
 {
+#ifndef WIN64
 	LPFN_ISWOW64PROCESS fnIsWow64Process;
+#endif
     BOOL bIsWow64 = FALSE;
 	std::wstring Result = L"";
 
