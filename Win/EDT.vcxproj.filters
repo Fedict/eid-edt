@@ -68,6 +68,9 @@
     <ClInclude Include="src\util\util_process.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\registry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\hardware.cpp">
@@ -101,6 +104,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\process.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\registry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

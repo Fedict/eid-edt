@@ -17,14 +17,28 @@
  * http://www.gnu.org/licenses/.
 
 **************************************************************************** */
-#ifndef __EDT_UTIL_REGISTRY_H__
-#define __EDT_UTIL_REGISTRY_H__
 
-#include <string>
-////////////////////////////////////////////////////////////////////////////////////////////////
-// hRootKey values are HKEY_CLASSES_ROOT   HKEY_CURRENT_USER    HKEY_LOCAL_MACHINE    HKEY_USERS 
-////////////////////////////////////////////////////////////////////////////////////////////////
-int registryGetValue(HKEY hRootKey, const wchar_t *wzKey, const wchar_t *wzName, std::wstring *ValueStr);
-int registryLogPermissions(HKEY hRootKey, const wchar_t *wzKey);
+#include "edt.h" //includes <windows.h>
+#include "log.h"
+#include "registry.h"
+#include "util_registry.h"
 
-#endif //__EDT_UTIL_REGISTRY_H__
+
+int EDT_StartRegistryLog()
+{
+	LOG(EDT_LINE_BREAK);
+	LOG(L"<EDT_REGISTRY_START>\n");
+	LOG(EDT_LINE_BREAK);
+	LOG_SCREEN(L"gathering registry info...\r\n");
+
+	int iReturnCode = EDT_OK;
+
+	registryLogPermissions(HKEY_LOCAL_MACHINE,L"SOFTWARE\\Microsoft\\Cryptography\\Calais\\Readers");
+
+
+	LOG(EDT_LINE_BREAK);
+	LOG(L"<EDT_REGISTRY_STOP>\n\n");
+
+	return iReturnCode;
+}
+

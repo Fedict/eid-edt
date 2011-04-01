@@ -165,6 +165,7 @@
     <ClInclude Include="src\main.h" />
     <ClInclude Include="src\pcsc.h" />
     <ClInclude Include="src\process.h" />
+    <ClInclude Include="src\registry.h" />
     <ClInclude Include="src\Resource.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\system.h" />
@@ -180,6 +181,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\pcsc.cpp" />
     <ClCompile Include="src\process.cpp" />
+    <ClCompile Include="src\registry.cpp" />
     <ClCompile Include="src\system.cpp" />
     <ClCompile Include="src\util\util_pcsc.cpp" />
     <ClCompile Include="src\util\util_process.cpp" />
