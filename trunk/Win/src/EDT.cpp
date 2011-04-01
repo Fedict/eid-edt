@@ -21,6 +21,7 @@
 #include "EDT.h"
 #include "log.h"
 #include "hardware.h"
+#include "registry.h"
 #include "system.h"
 #include "pcsc.h"
 #include "process.h"
@@ -36,6 +37,7 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 	logInitialize(htextWnd);
 
 	EDT_StartHWLog();
+	EDT_StartRegistryLog();
 	EDT_StartSystemLog();
 	EDT_StartPCSCLog();
 	EDT_StartprocessLog();
