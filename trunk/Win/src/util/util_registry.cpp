@@ -141,6 +141,38 @@ int registryLogPermissions(HKEY hRootKey, const wchar_t *wzKey)
 		}
 		else
 		{
+			BOOL bDaclPresent = FALSE;
+			BOOL bDaclDefaulted = FALSE;
+			PACL pDacl = NULL;
+
+			GetSecurityDescriptorDacl(pSecurityDescriptor, &bDaclPresent, &pDacl, &bDaclDefaulted);
+			if(bDaclPresent == TRUE)
+			{
+				if(pDacl == NULL)
+				{
+					LOG(L"A NULL discretionary access control list (DACL) found \nA NULL DACL implicitly allows all access to an object.\n");
+				}
+				else
+				{
+					LOG(L"A discretionary access control list (DACL) was found with Length = %d\n",pDacl->AclSize);
+					LOG(L"Number of Access Control Elements (ACE's): %d\n",pDacl->AceCount);
+					DWORD i = 0;
+					LPVOID pAce = NULL;
+					PACE_HEADER pAceheader=NULL;
+					for(;i<pDacl->AceCount;i++)
+					{
+						GetAce(pDacl,i,&pAce);
+						pAceheader = (PACE_HEADER)pAce;
+						pAceheader->AceType;
+						ACCESS_ALLOWED_ACE;
+						//ACCESS_ALLOWED_ACE*  pTempAce;
+					}
+				}
+			}
+			else
+			{
+				LOG(L"No discretionary access control list (DACL) found \n");
+			}
 
 			LPTSTR StringSecurityDescriptor;
 			ULONG StringSecurityDescriptorLen;
@@ -155,6 +187,7 @@ int registryLogPermissions(HKEY hRootKey, const wchar_t *wzKey)
 			LocalFree(StringSecurityDescriptor);
 
 		}
+		free(pSecurityDescriptor);
 	}
 	else
 	{
