@@ -29,6 +29,7 @@
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
+BOOL bg_AutoExit = FALSE;
 
 // Forward declarations of functions included in this code module:
 DWORD WINAPI		EDTThreadFunction( LPVOID lpParam );
@@ -36,6 +37,7 @@ ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE hInstance,HWND *phtextWnd, int nCmdShow);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+void				ParseCommandChar(TCHAR cmdChar);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -43,9 +45,23 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      int       nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(lpCmdLine);
 
- 	// TODO: Place code here.
+	if(lpCmdLine != NULL)
+	{
+		LPTSTR lpcmdchar = lpCmdLine;
+		//DWORD cmdlineLen = wcslen(lpCmdLine);
+		while(*lpcmdchar != '\0')
+		{
+			if(*lpcmdchar != L' ') 
+			{
+				TCHAR cmdChar = *lpcmdchar;
+				ParseCommandChar(cmdChar);
+			}
+			lpcmdchar++;
+		}
+	}
+	//lpCmdLine = GetCommandLine();
+
 	MSG msg;
 	HACCEL hAccelTable;
 	HWND htextWnd = NULL;
@@ -203,6 +219,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
+		case IDM_AUTO_EXIT:
+			if(bg_AutoExit == TRUE)
+				DestroyWindow(hWnd);
+			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
@@ -245,3 +265,13 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 
+void ParseCommandChar(TCHAR cmdChar)
+{
+	switch(cmdChar)
+	{
+	case L'A':
+	case L'a':
+		bg_AutoExit = TRUE;
+		break;
+	};
+}

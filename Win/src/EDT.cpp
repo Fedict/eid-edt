@@ -18,6 +18,7 @@
 
 **************************************************************************** */
 
+#include "main.h"
 #include "EDT.h"
 #include "log.h"
 #include "hardware.h"
@@ -43,6 +44,9 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 	EDT_StartprocessLog();
 
 	logFinalize(htextWnd);
+
+	HWND hWnd = GetParent(htextWnd);
+	SendMessage(hWnd,WM_COMMAND,IDM_AUTO_EXIT,NULL);
 
 	return 0;
 }
