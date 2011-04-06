@@ -30,7 +30,12 @@
 #include "log.h"
 #include <shlobj.h>
 
+#define LOGFILE64 L"EDTlog64.txt"
+#ifdef WIN64
+#define LOGFILE LOGFILE64
+#else
 #define LOGFILE L"EDTlog.txt"
+#endif
 
 static FILE *g_pfile=NULL;
 static bool g_logAvailable=true;
