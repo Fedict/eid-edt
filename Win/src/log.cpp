@@ -37,10 +37,12 @@
 #define LOGFILE L"EDTlog.txt"
 #endif
 
+#define EDT_FOLDERPATH_LEN 512
 static FILE *g_pfile=NULL;
 static bool g_logAvailable=true;
 static HWND g_htextWnd=NULL;
 static int g_indent=0;
+static TCHAR g_folderpath[EDT_FOLDERPATH_LEN];
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// PRIVATE FUNCTIONS DECLARATION ////////////////////////////////////
@@ -58,31 +60,31 @@ int logInitialize(HWND htextWnd)
 {
 	int iReturnCode = EDT_OK;
 	errno_t err = 0;
-	const DWORD bufferSize = 512;
-	TCHAR folderpath[bufferSize];
+	const DWORD bufferSize = EDT_FOLDERPATH_LEN;
+	//TCHAR g_folderpath[bufferSize];
 
 	if(g_pfile)  return EDT_OK;
 
 	g_htextWnd = htextWnd;
 	//create file path
-	if(!SHGetSpecialFolderPath(NULL,folderpath,CSIDL_MYDOCUMENTS,FALSE))
+	if(!SHGetSpecialFolderPath(NULL,g_folderpath,CSIDL_MYDOCUMENTS,FALSE))
 	{
 		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"My Documents folder not found");
 		iReturnCode = EDT_ERR_INTERNAL;
 	}
 	else
 	{
-		if(0 != wcscat_s(folderpath,bufferSize,L"\\")) //Ending by slash
+		if(0 != wcscat_s(g_folderpath,bufferSize,L"\\")) //Ending by slash
 		{			
-			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"Folderpath is too long. folderpath = ");
-			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)folderpath);
+			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"g_folderpath is too long. g_folderpath = ");
+			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)g_folderpath);
 			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
 			iReturnCode = EDT_ERR_INTERNAL;
 		}
-		if(0 != wcscat_s(folderpath,bufferSize,LOGFILE))
+		if(0 != wcscat_s(g_folderpath,bufferSize,LOGFILE))
 		{			
-			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"Folderpath too long. folderpath = ");
-			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)folderpath);
+			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"g_folderpath too long. g_folderpath = ");
+			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)g_folderpath);
 			SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
 			iReturnCode = EDT_ERR_INTERNAL;
 		}
@@ -95,8 +97,10 @@ int logInitialize(HWND htextWnd)
 	//Create the file (Erase previous file)
 	for(int i=0;i<LOG_OPEN_ATTEMPT_COUNT;i++)
 	{
-		err = _wfopen_s(&g_pfile, folderpath, L"w");
+		//err = _wfopen_s(&g_pfile, g_folderpath, L"w");
 		
+		g_pfile = _wfsopen(g_folderpath, L"w",_SH_DENYNO);
+
 		if (g_pfile)
 		{
 			break;
@@ -123,7 +127,7 @@ int logInitialize(HWND htextWnd)
 	else
 	{
 		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"Could not open the logfile at ");
-		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)folderpath);
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)g_folderpath);
 		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
 		return EDT_ERR_FILE_CREATE_FAILED;
 	}
@@ -232,6 +236,29 @@ int LOG_TIME(const wchar_t *format, ...)
 	va_end(args);
 
 	return iReturnCode;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
+// LOG_CMD : log the output of a system command
+///////////////////////////////////////////////////////////////////////////////////////////
+int LOG_CMD(const wchar_t *cmd)
+{
+	wchar_t thecmd[1024+EDT_FOLDERPATH_LEN];
+
+	//fflush(g_pfile);
+	if (g_pfile != NULL)
+	{
+		return -1;
+	}
+	if (wcslen(cmd) > 1020 )
+	{
+		return -1;
+	}
+	wcscpy_s(thecmd,cmd);
+	wcscat_s(thecmd,L" >> ");
+	wcscat_s(thecmd,g_folderpath);
+	_wsystem(thecmd);
+
+	return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// PRIVATE FUNCTIONS ////////////////////////////////////////////////
