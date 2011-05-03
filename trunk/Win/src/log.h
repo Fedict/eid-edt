@@ -54,6 +54,7 @@ void LOG_APDU(BYTE *apdu, DWORD apdulen);
 void LOG_BYTE_ARRAY(BYTE *byteArray, DWORD arrayLen);
 void LOG_INC_INDENT();
 void LOG_DEC_INDENT();
+int LOG_CMD(const wchar_t *cmd);
 int logFinalize(HWND htextWnd);
 
 #endif //__DIAGLIB_LOG_H__

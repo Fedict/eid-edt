@@ -159,6 +159,7 @@
     <ResourceCompile Include="EDTNG.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\certstore.h" />
     <ClInclude Include="src\EDT.h" />
     <ClInclude Include="src\hardware.h" />
     <ClInclude Include="src\log.h" />
@@ -175,6 +176,7 @@
     <ClInclude Include="src\util\util_system.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\certstore.cpp" />
     <ClCompile Include="src\EDT.cpp" />
     <ClCompile Include="src\hardware.cpp" />
     <ClCompile Include="src\log.cpp" />

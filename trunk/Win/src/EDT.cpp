@@ -26,6 +26,7 @@
 #include "system.h"
 #include "pcsc.h"
 #include "process.h"
+#include "certstore.h"
 
 // Forward declarations of functions included in this code module:
 DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
@@ -44,6 +45,8 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 	EDT_StartprocessLog();
 
 	logFinalize(htextWnd);
+
+	EDT_StartCertStoreLog();
 
 	HWND hWnd = GetParent(htextWnd);
 	SendMessage(hWnd,WM_COMMAND,IDM_AUTO_EXIT,NULL);
