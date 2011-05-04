@@ -74,6 +74,9 @@
     <ClInclude Include="src\certstore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\services.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\hardware.cpp">
@@ -113,6 +116,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\certstore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\services.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
