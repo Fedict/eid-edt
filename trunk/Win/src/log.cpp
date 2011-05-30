@@ -29,6 +29,7 @@
 //#include "error.h"
 #include "log.h"
 #include <shlobj.h>
+#include <stdio.h>
 
 #define LOGFILE64 L"EDTlog64.txt"
 #ifdef WIN64
@@ -97,9 +98,9 @@ int logInitialize(HWND htextWnd)
 	//Create the file (Erase previous file)
 	for(int i=0;i<LOG_OPEN_ATTEMPT_COUNT;i++)
 	{
-		//err = _wfopen_s(&g_pfile, g_folderpath, L"w");
+		err = _wfopen_s(&g_pfile, g_folderpath, L"w");
 		
-		g_pfile = _wfsopen(g_folderpath, L"w",_SH_DENYNO);
+		//g_pfile = _wfsopen(g_folderpath, L"w+",_SH_DENYWR);
 
 		if (g_pfile)
 		{
@@ -148,6 +149,68 @@ int logFinalize(HWND htextWnd)
 	{
 		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"no log file specified, couldn't close logfile\r\n");
 	}
+	return EDT_OK;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
+int logFileToScreen(HWND htextWnd)
+{
+	if(htextWnd == NULL)
+	{
+		return EDT_ERR_BAD_PARAM;
+	}
+	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"printing logfile to screen..\r\n");
+	if(g_pfile == NULL)
+	{
+		for(int i=0;i<LOG_OPEN_ATTEMPT_COUNT;i++)
+		{
+			_wfopen_s(&g_pfile, g_folderpath, L"rt");
+			if (g_pfile)
+			{
+				SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"logfile opened..\r\n");
+				break;
+			}
+			else
+			{
+				if (i == (LOG_OPEN_ATTEMPT_COUNT -1))
+				{
+					return EDT_ERR_FILE_NOT_FOUND;
+				}
+				Sleep(500);
+			}
+		}
+	}
+	if ( fseek(g_pfile, 0L,SEEK_SET) != 0 )
+	{
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"couldn't rewind logfile\r\n");
+		return EDT_ERR_INTERNAL;
+	};
+
+	wchar_t buffer[1024];
+	size_t lineLen = 0;
+
+	while (fgetws( buffer, 1022, g_pfile) != NULL)
+	{
+		lineLen = wcslen(buffer);//fgetws sets wchar #1022 to null, so lineLen < 1022
+		//buffer[lineLen] = '\r';
+		//buffer[lineLen+1] = '\n';
+		//buffer[lineLen+1] = '\0';
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)buffer);
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
+	}
+	if (feof(g_pfile) == 0 )
+	{
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"an error occured trying to read from the logfile\r\n");
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"errno =");
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)errno);
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\nplease copy the logfile from ");
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)g_folderpath);
+		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
+	}
+
+	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"logfile successfully printed from ");
+	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)g_folderpath);
+	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
+
 	return EDT_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////

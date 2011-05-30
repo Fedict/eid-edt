@@ -50,6 +50,8 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 
 	EDT_StartCertStoreLog();
 
+	logFileToScreen(htextWnd);
+
 	HWND hWnd = GetParent(htextWnd);
 	SendMessage(hWnd,WM_COMMAND,IDM_AUTO_EXIT,NULL);
 
