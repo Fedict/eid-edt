@@ -22,19 +22,22 @@
 #include "stdafx.h"
 #include "main.h"
 #include <string>
+#include <Winuser.h>
 
 #define MAX_LOADSTRING 100
+#define COPY_BUTTON_HEIGHT 20
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 BOOL bg_AutoExit = FALSE;
+HWND hg_textWnd = NULL;			//handle to the edit control
 
 // Forward declarations of functions included in this code module:
 DWORD WINAPI		EDTThreadFunction( LPVOID lpParam );
 ATOM				MyRegisterClass(HINSTANCE hInstance);
-BOOL				InitInstance(HINSTANCE hInstance,HWND *phtextWnd, int nCmdShow);
+BOOL				InitInstance(HINSTANCE hInstance,int nCmdShow);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 void				ParseCommandChar(TCHAR cmdChar);
@@ -64,7 +67,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 	MSG msg;
 	HACCEL hAccelTable;
-	HWND htextWnd = NULL;
 
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -72,10 +74,13 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	MyRegisterClass(hInstance);
 
 	// Perform application initialization:
-	if (!InitInstance (hInstance, &htextWnd, nCmdShow))
+	if (!InitInstance (hInstance, nCmdShow))
 	{
 		return FALSE;
 	}
+
+	//Edit_LimitText(hg_textWnd, 999999);
+	//EM_EXLIMITTEXT -> rich control 2
 
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_EDTNG));
 
@@ -88,7 +93,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		NULL,                   // default security attributes
 		0,                      // use default stack size  
 		EDTThreadFunction,		// thread function name
-		htextWnd,				// argument to thread function 
+		hg_textWnd,				// argument to thread function 
 		0,                      // use default creation flags 
 		&dwThreadId);			// returns the thread identifier 
 
@@ -153,43 +158,73 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
-BOOL InitInstance(HINSTANCE hInstance,HWND *phtextWnd, int nCmdShow)
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd;
-   int Edit_ID = ID_EDITCONTROL;
+   HWND hCopyButton;
 
    hInst = hInstance; // Store instance handle in our global variable
-   std::wstring EdtTitle;
-   EdtTitle.assign(L"EDT TOOL V");
-
-   WCHAR TempBuffer[10];
-   wsprintf(TempBuffer,L"%d.%d",EDT_VERSION_MAJOR,EDT_VERSION_MINOR);
+   WCHAR EdtTitle[100];
+   wsprintf(EdtTitle,L"EDT TOOL V%d.%d\n",EDT_VERSION_MAJOR,EDT_VERSION_MINOR);
    
-   EdtTitle.append(TempBuffer);
-
-   hWnd = CreateWindow(szWindowClass,EdtTitle.c_str(), WS_OVERLAPPEDWINDOW,
+   hWnd = CreateWindow(szWindowClass,EdtTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
    
    if (!hWnd)
    {
       return FALSE;
    }
-   EdtTitle.append(L"\n");
 
-   *phtextWnd = CreateWindow(L"EDIT", EdtTitle.c_str(), WS_CHILD | WS_SIZEBOX | ES_MULTILINE | ES_LEFT | WS_VSCROLL | WS_HSCROLL,
-   CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, hWnd, (HMENU)&Edit_ID, hInstance, NULL);
+   hCopyButton = CreateWindow(L"BUTTON", L"<<< COPY ALL >>>", WS_CHILD | BS_PUSHBUTTON | BS_TEXT | BS_VCENTER,
+   CW_USEDEFAULT, 0, 200, COPY_BUTTON_HEIGHT, hWnd, (HMENU)ID_COPYCONTROL, hInstance, NULL);
+   if (!(hCopyButton))
+   {
+      return FALSE;
+   }
 
-   if (!(*phtextWnd))
+   hg_textWnd = CreateWindow(L"EDIT", NULL, WS_CHILD | ES_MULTILINE | ES_LEFT ,
+   0, COPY_BUTTON_HEIGHT, CW_USEDEFAULT, 0, hWnd, (HMENU)ID_EDITCONTROL, hInstance, NULL);
+
+   if (!hg_textWnd)
    {
       return FALSE;
    }
 
    ShowWindow(hWnd, nCmdShow);
+   ShowWindow(hg_textWnd, SW_SHOWNORMAL);
+   ShowWindow(hCopyButton, SW_SHOWNORMAL);
    UpdateWindow(hWnd);
-   ShowWindow(*phtextWnd, SW_SHOWMAXIMIZED);
-   UpdateWindow(*phtextWnd);
-
    return TRUE;
+}
+
+
+BOOL CALLBACK ChildWindowResize(HWND hWndChild, LPARAM lParam)
+{
+	LPRECT rcPar = (LPRECT)lParam;
+	LONG childId = GetWindowLong(hWndChild,GWL_ID);
+
+	switch(childId)
+	{
+	case ID_COPYCONTROL:
+		MoveWindow(hWndChild,
+			rcPar->left,
+			rcPar->bottom - COPY_BUTTON_HEIGHT,
+			rcPar->right - rcPar->left,
+			COPY_BUTTON_HEIGHT,
+			TRUE);
+		break;
+	case ID_EDITCONTROL:
+		MoveWindow(hWndChild,
+			rcPar->left,
+			rcPar->top,
+			rcPar->right - rcPar->left,
+			rcPar->bottom - COPY_BUTTON_HEIGHT,
+			TRUE);
+		break;
+	default:
+		break;
+	};
+	return TRUE;
 }
 
 //
@@ -207,28 +242,61 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
 	HDC hdc;
+	RECT rcClient;
 
 	switch (message)
 	{
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam);
 		wmEvent = HIWORD(wParam);
-		// Parse the menu selections:
-		switch (wmId)
+
+		switch(wmEvent)
 		{
-		case IDM_ABOUT:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-			break;
-		case IDM_AUTO_EXIT:
-			if(bg_AutoExit == TRUE)
-				DestroyWindow(hWnd);
-			break;
-		case IDM_EXIT:
-			DestroyWindow(hWnd);
+		case BN_CLICKED:
+			//copy button clicked, now select and copy all text present in the edit control
+
+			if (OpenClipboard(hWnd) != 0)
+			{
+				if ( EmptyClipboard() != 0)
+				{
+					int textLen = GetWindowTextLength(hg_textWnd);
+					DWORD memSize = (textLen + 1)* sizeof(wchar_t);
+					HGLOBAL hglbMem = GlobalAlloc(GMEM_MOVEABLE,memSize);
+					
+					if(hglbMem != NULL)
+					{
+						LPTSTR lpstrCopy = (LPTSTR)GlobalLock(hglbMem);
+						GetWindowText(hg_textWnd,lpstrCopy,memSize);
+						GlobalUnlock(hglbMem);
+						SetClipboardData(CF_UNICODETEXT,hglbMem);
+					}
+				}
+				CloseClipboard();
+			}
 			break;
 		default:
-			return DefWindowProc(hWnd, message, wParam, lParam);
+			// Parse the menu selections:
+			switch (wmId)
+			{
+			case IDM_ABOUT:
+				DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+				break;
+			case IDM_AUTO_EXIT:
+				if(bg_AutoExit == TRUE)
+					DestroyWindow(hWnd);
+				break;
+			case IDM_EXIT:
+				DestroyWindow(hWnd);
+				break;
+			default:
+				return DefWindowProc(hWnd, message, wParam, lParam);
+			}
+			break;
 		}
+		break;
+	case WM_SIZE:
+		GetClientRect(hWnd,&rcClient);
+		EnumChildWindows(hWnd,ChildWindowResize, (LPARAM) &rcClient);
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
