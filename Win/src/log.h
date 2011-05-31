@@ -47,6 +47,8 @@
 //int logGetFileName(const wchar_t **file);
 int logInitialize(HWND htextWnd);
 int logFileToScreen(HWND htextWnd);
+void logShowLogFile(void);
+int logFilePathToScreen(HWND htextWnd);
 int LOG_SCREEN(const wchar_t *line);
 inline int LOG(const wchar_t *format, ...);
 int LOG_BASIC(const wchar_t *format, ...);
