@@ -31,12 +31,12 @@
 #include <shlobj.h>
 #include <stdio.h>
 
-#define LOGFILE64 L"EDTlog64.txt"
-#ifdef WIN64
-#define LOGFILE LOGFILE64
-#else
+//#define LOGFILE64 L"EDTlog64.txt"
+//#ifdef WIN64
+//#define LOGFILE LOGFILE64
+//#else
 #define LOGFILE L"EDTlog.txt"
-#endif
+//#endif
 
 #define EDT_FOLDERPATH_LEN 512
 static FILE *g_pfile=NULL;
@@ -50,6 +50,7 @@ static TCHAR g_folderpath[EDT_FOLDERPATH_LEN];
 ////////////////////////////////////////////////////////////////////////////////////////////////
 void getLocalTime(std::wstring &timestamp);
 int logWrite(bool time,bool indent, const wchar_t *format, va_list argList);
+typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// PUBLIC FUNCTIONS /////////////////////////////////////////////////
@@ -62,6 +63,7 @@ int logInitialize(HWND htextWnd)
 	int iReturnCode = EDT_OK;
 	errno_t err = 0;
 	const DWORD bufferSize = EDT_FOLDERPATH_LEN;
+	BOOL appendLog = FALSE;
 	//TCHAR g_folderpath[bufferSize];
 
 	if(g_pfile)  return EDT_OK;
@@ -94,12 +96,42 @@ int logInitialize(HWND htextWnd)
 	{
 		return iReturnCode;
 	}
+
+	//if we are a 32 bit application, running on a 64 bit OS,
+	//we append our log to the one of our 64 bit counterpart
+#ifndef WIN64
+	LPFN_ISWOW64PROCESS fnIsWow64Process;
+    BOOL bIsWow64 = FALSE;
+
+	fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
+
+    if (NULL != fnIsWow64Process)
+    {
+        if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
+        {
+            LOG_LASTERROR(L"fnIsWow64Process failed");
+			appendLog = TRUE;//Could not determine architecture, but append, just in case
+        }
+		if(bIsWow64)
+		{
+			appendLog = TRUE;//32 bit application running on 64 bit Windows
+		}
+    }
+#endif
+
 	
-	//Create the file (Erase previous file)
 	for(int i=0;i<LOG_OPEN_ATTEMPT_COUNT;i++)
 	{
-		err = _wfopen_s(&g_pfile, g_folderpath, L"w");
-		
+		if(appendLog == TRUE)
+		{
+			//Create the file (or append previous file)
+			err = _wfopen_s(&g_pfile, g_folderpath, L"a+, ccs=UTF-8");//UNICODE
+		}
+		else
+		{
+			//Create the file (or erase previous file)
+			err = _wfopen_s(&g_pfile, g_folderpath, L"w, ccs=UTF-8");//UNICODE
+		}
 		//g_pfile = _wfsopen(g_folderpath, L"w+",_SH_DENYWR);
 
 		if (g_pfile)
@@ -135,7 +167,6 @@ int logInitialize(HWND htextWnd)
 
 	return iReturnCode;
 }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
 int logFinalize(HWND htextWnd)
 {
@@ -163,7 +194,7 @@ int logFileToScreen(HWND htextWnd)
 	{
 		for(int i=0;i<LOG_OPEN_ATTEMPT_COUNT;i++)
 		{
-			_wfopen_s(&g_pfile, g_folderpath, L"rt");
+			_wfopen_s(&g_pfile, g_folderpath, L"rb, ccs=UTF-8");
 			if (g_pfile)
 			{
 				SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"logfile opened..\r\n");
@@ -185,17 +216,19 @@ int logFileToScreen(HWND htextWnd)
 		return EDT_ERR_INTERNAL;
 	};
 
-	wchar_t buffer[1024];
+	wchar_t buffer[100001];
 	size_t lineLen = 0;
+	int numRead = 0;
 
-	while (fgetws( buffer, 1022, g_pfile) != NULL)
+	//while (fgetws( buffer, 1022, g_pfile) != NULL)
+	while( (numRead = fread( buffer, sizeof( wchar_t ), 100000, g_pfile)) > 0  )
 	{
-		lineLen = wcslen(buffer);//fgetws sets wchar #1022 to null, so lineLen < 1022
-		//buffer[lineLen] = '\r';
-		//buffer[lineLen+1] = '\n';
-		//buffer[lineLen+1] = '\0';
-		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)buffer);
-		SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
+		//lineLen = wcslen(buffer);//fgetws sets wchar #1022 to null, so lineLen < 1022
+		//buffer[numread] = '\r';
+		//buffer[numread+1] = '\n';
+		buffer[numRead] = '\0';
+		SendMessageA(htextWnd, EM_REPLACESEL,0,  (LPARAM)buffer);
+		//SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
 	}
 	if (feof(g_pfile) == 0 )
 	{
@@ -211,6 +244,28 @@ int logFileToScreen(HWND htextWnd)
 	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)g_folderpath);
 	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
 
+	return EDT_OK;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
+void logShowLogFile(void)
+{
+	wchar_t thecmd[1024+EDT_FOLDERPATH_LEN];
+
+	wcscpy_s(thecmd,L"explorer /select,");
+	wcscat_s(thecmd,g_folderpath);
+	_wsystem(thecmd);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
+int logFilePathToScreen(HWND htextWnd)
+{
+	if(htextWnd == NULL)
+	{
+		return EDT_ERR_BAD_PARAM;
+	}
+	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\nLogFile stored at ");
+	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)g_folderpath);
+	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"\r\n");
+	
 	return EDT_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
