@@ -175,14 +175,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
 
-   hCopyButton = CreateWindow(L"BUTTON", L"<<< COPY ALL >>>", WS_CHILD | BS_PUSHBUTTON | BS_TEXT | BS_VCENTER,
-   CW_USEDEFAULT, 0, 200, COPY_BUTTON_HEIGHT, hWnd, (HMENU)ID_COPYCONTROL, hInstance, NULL);
+   hCopyButton = CreateWindow(L"BUTTON", L"<<< SHOW LOGFILE >>>", WS_CHILD | BS_PUSHBUTTON | BS_TEXT | BS_VCENTER,
+   CW_USEDEFAULT, 0, 200, COPY_BUTTON_HEIGHT, hWnd, (HMENU)ID_BUTTON, hInstance, NULL);
    if (!(hCopyButton))
    {
       return FALSE;
    }
-
-   hg_textWnd = CreateWindow(L"EDIT", NULL, WS_CHILD | ES_MULTILINE | ES_LEFT ,
+   hg_textWnd = CreateWindow(L"EDIT", NULL,  WS_CHILD | ES_MULTILINE | ES_LEFT | WS_VSCROLL | WS_HSCROLL ,
    0, COPY_BUTTON_HEIGHT, CW_USEDEFAULT, 0, hWnd, (HMENU)ID_EDITCONTROL, hInstance, NULL);
 
    if (!hg_textWnd)
@@ -205,7 +204,7 @@ BOOL CALLBACK ChildWindowResize(HWND hWndChild, LPARAM lParam)
 
 	switch(childId)
 	{
-	case ID_COPYCONTROL:
+	case ID_BUTTON:
 		MoveWindow(hWndChild,
 			rcPar->left,
 			rcPar->bottom - COPY_BUTTON_HEIGHT,
@@ -250,48 +249,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		wmId    = LOWORD(wParam);
 		wmEvent = HIWORD(wParam);
 
-		switch(wmEvent)
+		//copy button clicked, now select and copy all text present in the edit control
+		/*if (OpenClipboard(hWnd) != 0)
 		{
-		case BN_CLICKED:
-			//copy button clicked, now select and copy all text present in the edit control
+		if ( EmptyClipboard() != 0)
+		{
+		int textLen = GetWindowTextLength(hg_textWnd);
+		DWORD memSize = (textLen + 1)* sizeof(wchar_t);
+		HGLOBAL hglbMem = GlobalAlloc(GMEM_MOVEABLE,memSize);
 
-			if (OpenClipboard(hWnd) != 0)
+		if(hglbMem != NULL)
+		{
+		LPTSTR lpstrCopy = (LPTSTR)GlobalLock(hglbMem);
+		GetWindowText(hg_textWnd,lpstrCopy,memSize);
+		GlobalUnlock(hglbMem);
+		SetClipboardData(CF_UNICODETEXT,hglbMem);
+		}
+		}
+		CloseClipboard();
+		}*/
+
+		// Parse the menu selections:
+		switch (wmId)
+		{
+		case ID_BUTTON:
+			if( wmEvent== BN_CLICKED)
 			{
-				if ( EmptyClipboard() != 0)
-				{
-					int textLen = GetWindowTextLength(hg_textWnd);
-					DWORD memSize = (textLen + 1)* sizeof(wchar_t);
-					HGLOBAL hglbMem = GlobalAlloc(GMEM_MOVEABLE,memSize);
-					
-					if(hglbMem != NULL)
-					{
-						LPTSTR lpstrCopy = (LPTSTR)GlobalLock(hglbMem);
-						GetWindowText(hg_textWnd,lpstrCopy,memSize);
-						GlobalUnlock(hglbMem);
-						SetClipboardData(CF_UNICODETEXT,hglbMem);
-					}
-				}
-				CloseClipboard();
+				logShowLogFile();
 			}
+			break;
+		case IDM_ABOUT:
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+			break;
+		case IDM_AUTO_EXIT:
+			if(bg_AutoExit == TRUE)
+				DestroyWindow(hWnd);
+			break;
+		case IDM_EXIT:
+			DestroyWindow(hWnd);
 			break;
 		default:
-			// Parse the menu selections:
-			switch (wmId)
-			{
-			case IDM_ABOUT:
-				DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-				break;
-			case IDM_AUTO_EXIT:
-				if(bg_AutoExit == TRUE)
-					DestroyWindow(hWnd);
-				break;
-			case IDM_EXIT:
-				DestroyWindow(hWnd);
-				break;
-			default:
-				return DefWindowProc(hWnd, message, wParam, lParam);
-			}
-			break;
+			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
 	case WM_SIZE:

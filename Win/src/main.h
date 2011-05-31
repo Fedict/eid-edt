@@ -54,6 +54,6 @@
 #endif
 
 //
-#define ID_COPYCONTROL 11
+#define ID_BUTTON 11
 #define ID_EDITCONTROL 12
 
