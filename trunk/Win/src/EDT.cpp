@@ -36,7 +36,8 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 	//http://msdn.microsoft.com/en-us/library/aa929135.aspx
 	// SetWindowText(htextWnd,L"Extra text\n");
 	//SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"Extra text\r\n"); // for Win32 windows
-
+	SendMessage(htextWnd, EM_SETLIMITTEXT,0, NULL); // for Win32 windows
+	
 	logInitialize(htextWnd);
 
 	EDT_StartHWLog();
@@ -50,7 +51,9 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 
 	EDT_StartCertStoreLog();
 
-	logFileToScreen(htextWnd);
+	//logFileToScreen(htextWnd);
+	logFilePathToScreen(htextWnd);
+	//logShowLogFile();
 
 	HWND hWnd = GetParent(htextWnd);
 	SendMessage(hWnd,WM_COMMAND,IDM_AUTO_EXIT,NULL);

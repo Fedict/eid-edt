@@ -21,6 +21,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "log.h"
 
 #define EDT_LINE_BREAK L"=====================================================\n"
 
