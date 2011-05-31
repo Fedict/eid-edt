@@ -63,7 +63,7 @@ int logInitialize(HWND htextWnd)
 	int iReturnCode = EDT_OK;
 	errno_t err = 0;
 	const DWORD bufferSize = EDT_FOLDERPATH_LEN;
-	BOOL appendLog = FALSE;
+	BOOL bIsWow64 = FALSE;
 	//TCHAR g_folderpath[bufferSize];
 
 	if(g_pfile)  return EDT_OK;
@@ -101,7 +101,7 @@ int logInitialize(HWND htextWnd)
 	//we append our log to the one of our 64 bit counterpart
 #ifndef WIN64
 	LPFN_ISWOW64PROCESS fnIsWow64Process;
-    BOOL bIsWow64 = FALSE;
+    
 
 	fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
 
@@ -110,19 +110,15 @@ int logInitialize(HWND htextWnd)
         if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
         {
             LOG_LASTERROR(L"fnIsWow64Process failed");
-			appendLog = TRUE;//Could not determine architecture, but append, just in case
+			bIsWow64 = TRUE;//Could not determine architecture, but append, just in case
         }
-		if(bIsWow64)
-		{
-			appendLog = TRUE;//32 bit application running on 64 bit Windows
-		}
     }
 #endif
 
 	
 	for(int i=0;i<LOG_OPEN_ATTEMPT_COUNT;i++)
 	{
-		if(appendLog == TRUE)
+		if(bIsWow64 == TRUE)
 		{
 			//Create the file (or append previous file)
 			err = _wfopen_s(&g_pfile, g_folderpath, L"a+, ccs=UTF-8");//UNICODE
@@ -149,10 +145,15 @@ int logInitialize(HWND htextWnd)
 		}
 	}
 	
+#ifdef WIN64
+	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"64 bit EDT TOOL VERSION: ");
+#else
+	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"32 bit EDT TOOL VERSION: ");
+#endif
 	WCHAR TempBuffer[100];
 	wsprintf(TempBuffer,L"%d.%d\r\n",EDT_VERSION_MAJOR,EDT_VERSION_MINOR);
-	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)L"EDT TOOL VERSION: ");
 	SendMessage(htextWnd, EM_REPLACESEL,0,  (LPARAM)TempBuffer);
+
 	if(g_pfile)
 	{
 		fwprintf_s(g_pfile,L"EDT TOOL VERSION: %d.%d\n",EDT_VERSION_MAJOR,EDT_VERSION_MINOR);
@@ -217,9 +218,9 @@ int logFileToScreen(HWND htextWnd)
 	};
 
 	wchar_t buffer[100001];
-	size_t lineLen = 0;
-	int numRead = 0;
-
+	//size_t lineLen = 0;
+	size_t numRead = 0;
+	
 	//while (fgetws( buffer, 1022, g_pfile) != NULL)
 	while( (numRead = fread( buffer, sizeof( wchar_t ), 100000, g_pfile)) > 0  )
 	{

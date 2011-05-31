@@ -59,5 +59,6 @@ void LOG_INC_INDENT();
 void LOG_DEC_INDENT();
 int LOG_CMD(const wchar_t *cmd);
 int logFinalize(HWND htextWnd);
+BOOL IsWow64Process();
 
 #endif //__DIAGLIB_LOG_H__
