@@ -28,15 +28,15 @@
 	#define LOG_ERROR_STRING_PREFIX LOG(L"ERROR: %s - ",__FUNCTION__)
 	#define LOG_CFERROR(format,message)	{LOG_ERROR_STRING_PREFIX; LOG(format L"\n",string_From_CFStringRef(message).c_str());}
 #endif
-#define LOG_ENTER() {LOG_INC_INDENT();LOG(L"Enter \'%hs\'\n",__FUNCTION__);}
-//#define LOG_EXIT(param) {LOG(L"Exit" param L"\n");LOG_DEC_INDENT();}
-#define LOG_EXIT(code) {LOG(L"Exit \'%hs\', ReturnValue = %d\n",__FUNCTION__,code);LOG_DEC_INDENT();}
+#define LOG_ENTER() {LogIncIndent();LOG(L"Enter \'%hs\'\n",__FUNCTION__);}
+//#define LOG_EXIT(param) {LOG(L"Exit" param L"\n");LogDecIndent();}
+#define LOG_EXIT(code) {LOG(L"Exit \'%hs\', ReturnValue = %d\n",__FUNCTION__,code);LogDecIndent();}
 #define LOG_ERROR(param) {LOG_ERROR_STRING_PREFIX; LOG(param L"\n");}
-#define LOG_EXIT_ERROR(param) {LOG_ERROR_STRING_PREFIX; LOG(param L"\n");LOG_DEC_INDENT();}
+#define LOG_EXIT_ERROR(param) {LOG_ERROR_STRING_PREFIX; LOG(param L"\n");LogDecIndent();}
 #define LOG_LASTERROR(message) {LOG_ERROR_STRING_PREFIX; LOG(message L" (LastError=%ld - 0x%x)\n", GetLastError(), GetLastError());}
 //#define LOG_LASTERROR1(format,message1) {LOG_ERROR_STRING_PREFIX; LOG(format L" (LastError=%ld - 0x%x)\n", message1, GetLastError(), GetLastError());}
 #define LOG_ERRORCODE(message,code) {LOG_ERROR_STRING_PREFIX; LOG(message L" (Error code=%ld - 0x%x)\n", code, code);}
-#define LOG_EXIT_ERRORCODE(message,code) {LOG_ERROR_STRING_PREFIX; LOG(message L" (Error code=%ld - 0x%x)\n", code, code);LOG_DEC_INDENT();}
+#define LOG_EXIT_ERRORCODE(message,code) {LOG_ERROR_STRING_PREFIX; LOG(message L" (Error code=%ld - 0x%x)\n", code, code);LogDecIndent();}
 //#define LOG_PCSCERROR(message,code,SW1,SW2) {LOG_ERROR_STRING_PREFIX; LOG(message L" (Error code=%ld - SW1=0x%x - SW2=0x%x )\n", code, SW1, SW2);}
 //#define LOG_ERROR1(format,message1)	{LOG_ERROR_STRING_PREFIX; LOG(format L"\n",message1);}
 
@@ -55,8 +55,9 @@ int LOG_BASIC(const wchar_t *format, ...);
 int LOG_TIME(const wchar_t *format, ...);
 void LOG_APDU(BYTE *apdu, DWORD apdulen);
 void LOG_BYTE_ARRAY(BYTE *byteArray, DWORD arrayLen);
-void LOG_INC_INDENT();
-void LOG_DEC_INDENT();
+void LOG_BYTE_ARRAY_AS_STRING(BYTE *byteArray, DWORD arrayLen);
+void LogIncIndent();
+void LogDecIndent();
 int LOG_CMD(const wchar_t *cmd);
 int logFinalize(HWND htextWnd);
 BOOL IsWow64Process();

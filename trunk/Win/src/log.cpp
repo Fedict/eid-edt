@@ -288,6 +288,18 @@ void LOG_BYTE_ARRAY(BYTE *byteArray, DWORD arrayLen)
 	LOG_BASIC(L"\n");
 }
 
+void LOG_BYTE_ARRAY_AS_STRING(BYTE *byteArray, DWORD arrayLen)
+{
+	DWORD counter = 0;
+	while (counter < arrayLen)
+	{
+		LOG_BASIC(L"%c", *byteArray);
+		counter++;
+		byteArray++;
+	}
+	LOG_BASIC(L"\n");
+}
+
 int LOG_SCREEN(const wchar_t *line)
 {
 	SendMessage(g_htextWnd, EM_REPLACESEL,0,  (LPARAM)line);
@@ -295,12 +307,12 @@ int LOG_SCREEN(const wchar_t *line)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-void LOG_INC_INDENT()
+void LogIncIndent()
 {
 	g_indent++; 
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
-void LOG_DEC_INDENT()
+void LogDecIndent()
 {
 	g_indent--; 
 }
