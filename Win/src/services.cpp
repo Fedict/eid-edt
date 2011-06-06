@@ -112,7 +112,7 @@ int EDT_StartServicesLog ()
 				for (ULONG i=0;i<dwNumberOfService;i++) 
 				{  
 					LOG(L"ServiceName = %s\n",pStatus[i].lpServiceName);
-					LOG_INC_INDENT();
+					LogIncIndent();
 
 					if(pStatus[i].lpDisplayName != NULL)
 					{
@@ -124,7 +124,7 @@ int EDT_StartServicesLog ()
 					}
 
 					serviceGetInfoFromManagerHandle(schManager, pStatus[i].lpServiceName);
-					LOG_DEC_INDENT();
+					LogDecIndent();
 				}
 			}
 			if(pBuf) free(pBuf);

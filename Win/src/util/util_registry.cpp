@@ -257,7 +257,7 @@ int registryLogAces(PACL pDacl)
 
 void RegistryLogAceMask(DWORD aceMask)
 {
-	LOG_INC_INDENT();
+	LogIncIndent();
 
 	if(GENERIC_ALL & aceMask)
 		LOG(L"GENERIC_ALL\n");
@@ -321,24 +321,24 @@ void RegistryLogAceMask(DWORD aceMask)
 	if(SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP & aceMask)
 		LOG(L"SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP\n");
 
-	LOG_DEC_INDENT();
+	LogDecIndent();
 }
 
 void RegistryLogAceSidStart(PSID SidStart)
 {
-	LOG_INC_INDENT();
+	LogIncIndent();
 
 	if (FALSE == IsValidSid(SidStart))
 	{
 		LOG(L"Invalid Sid given, cannot parse\n");
-		LOG_DEC_INDENT();
+		LogDecIndent();
 		return;
 	}
 	LPTSTR stringSid = NULL;
 	if(FALSE == ConvertSidToStringSid(SidStart,&stringSid))
 	{
 		LOG(L"Could not convert SID to SIDString\n");
-		LOG_DEC_INDENT();
+		LogDecIndent();
 		return;
 	}
 	LOG(L"SID = %s\n",stringSid);
@@ -487,7 +487,7 @@ void RegistryLogAceSidStart(PSID SidStart)
 			};
 		}
 	}
-	LOG_DEC_INDENT();
+	LogDecIndent();
 }
 
 void RegistryLogGeneralRIDS(LPTSTR stringIdentifierAuthority, DWORD sidSubAuthority)
@@ -632,7 +632,7 @@ void RegistryLogGeneralRIDS(LPTSTR stringIdentifierAuthority, DWORD sidSubAuthor
 
 void RegistryLogAceFlags(DWORD AceFlags)
 {
-	LOG_INC_INDENT();
+	LogIncIndent();
 
 	if(AceFlags & CONTAINER_INHERIT_ACE)
 		LOG(L"CONTAINER_INHERIT_ACE\n");
@@ -649,5 +649,5 @@ void RegistryLogAceFlags(DWORD AceFlags)
 	if(AceFlags & FAILED_ACCESS_ACE_FLAG)
 		LOG(L"FAILED_ACCESS_ACE_FLAG\n");
 
-	LOG_DEC_INDENT();
+	LogDecIndent();
 }
