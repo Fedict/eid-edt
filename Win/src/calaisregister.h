@@ -17,19 +17,9 @@
  * http://www.gnu.org/licenses/.
 
 **************************************************************************** */
-#ifndef __EDT_UTIL_REGISTRY_H__
-#define __EDT_UTIL_REGISTRY_H__
+#ifndef __EDT_REGISTRY_H__
+#define __EDT_REGISTRY_H__
 
-#include <string>
+int EDT_StartCalaisRegisterLog();
 
-#define EDTREGFLAG_NONE			0x0
-#define EDTREGFLAG_EIDMW_ONLY	0x1
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-// hRootKey values are HKEY_CLASSES_ROOT   HKEY_CURRENT_USER    HKEY_LOCAL_MACHINE    HKEY_USERS 
-////////////////////////////////////////////////////////////////////////////////////////////////
-int EDT_UtilReg_LogKeyTree(HKEY hrootKey,const wchar_t* keyName, int flags,int recursion=0);
-int EDT_UtilReg_LogValue(HKEY hRootKey, const wchar_t *wzKey, const wchar_t *wzName);
-int EDT_UtilReg_LogPermissions(HKEY hRootKey, const wchar_t *wzKey);
-
-#endif //__EDT_UTIL_REGISTRY_H__
+#endif //__EDT_REGISTRY_H__

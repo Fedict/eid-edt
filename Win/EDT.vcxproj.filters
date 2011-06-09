@@ -65,9 +65,6 @@
     <ClInclude Include="src\util\util_process.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\registry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\certstore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -78,6 +75,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\util\util_pcsc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\eidmw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\calaisregister.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -112,9 +115,6 @@
     <ClCompile Include="src\process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\registry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\certstore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -125,6 +125,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\util\util_pcsc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\eidmw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\calaisregister.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

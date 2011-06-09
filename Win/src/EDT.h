@@ -23,7 +23,8 @@
 #include "stdafx.h"
 #include "log.h"
 
-#define EDT_LINE_BREAK L"=====================================================\n"
+#define EDT_LINE_BREAK		L"=====================================================\n"
+#define EDT_HALF_LINE_BREAK L"==========================\n"
 
 #define EDT_VERSION_MAJOR	1
 #define EDT_VERSION_MINOR	0
