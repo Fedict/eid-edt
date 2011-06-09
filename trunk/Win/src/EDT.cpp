@@ -24,6 +24,7 @@
 #include "hardware.h"
 #include "calaisregister.h"
 #include "eidmw.h"
+#include "software.h"
 #include "system.h"
 #include "pcsc.h"
 #include "process.h"
@@ -46,6 +47,7 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 	EDT_StartSystemLog();
 	EDT_StartEidmwLog();
 	EDT_StartCalaisRegisterLog();
+	EDT_StartSoftwareLog();
 	EDT_StartprocessLog();
 	EDT_StartServicesLog();
 	EDT_StartPCSCLog();
