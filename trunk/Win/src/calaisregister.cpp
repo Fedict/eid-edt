@@ -20,32 +20,44 @@
 
 #include "edt.h" //includes <windows.h>
 #include "log.h"
-#include "hardware.h"
+#include "calaisregister.h"
 #include "util_registry.h"
 
-int EDT_StartHWLog()
+
+int EDT_StartCalaisRegisterLog()
 {
 	LOG(EDT_LINE_BREAK);
-	LOG(L"<EDT_HWLOG_START>\n");
+	LOG(L"<EDT_CALAISREGISTER_START>\n");
 	LOG(EDT_LINE_BREAK);
-	LOG_SCREEN(L"gathering hardware info...\r\n");
+	LOG_SCREEN(L"gathering registry info...\r\n");
 
 	int iReturnCode = EDT_OK;
 	int iFunctionCode = EDT_OK;
 
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// hRootKey values are HKEY_CLASSES_ROOT   HKEY_CURRENT_USER    HKEY_LOCAL_MACHINE    HKEY_USERS 
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	iFunctionCode = EDT_UtilReg_LogValue(HKEY_LOCAL_MACHINE,L"HARDWARE\\DESCRIPTION\\System\\BIOS",L"SystemProductName");
+	iFunctionCode = EDT_UtilReg_LogKeyTree(HKEY_LOCAL_MACHINE,L"SOFTWARE\\Microsoft\\Cryptography\\Calais\\Readers",EDTREGFLAG_NONE);
 	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
 		iReturnCode = iFunctionCode;
-	
-	iFunctionCode = EDT_UtilReg_LogValue(HKEY_LOCAL_MACHINE,L"HARDWARE\\DESCRIPTION\\System\\BIOS",L"systemManufacturer");
+
+	LOG(EDT_HALF_LINE_BREAK);
+
+	iFunctionCode = EDT_UtilReg_LogKeyTree(HKEY_CURRENT_USER,L"SOFTWARE\\Microsoft\\Cryptography\\Calais\\Readers",EDTREGFLAG_NONE);
+	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
+		iReturnCode = iFunctionCode;
+
+	LOG(EDT_HALF_LINE_BREAK);
+
+	iFunctionCode = EDT_UtilReg_LogPermissions(HKEY_LOCAL_MACHINE,L"SOFTWARE\\Microsoft\\Cryptography\\Calais\\Readers");
+	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
+		iReturnCode = iFunctionCode;
+
+	LOG(EDT_HALF_LINE_BREAK);
+
+	iFunctionCode = EDT_UtilReg_LogPermissions(HKEY_CURRENT_USER,L"SOFTWARE\\Microsoft\\Cryptography\\Calais\\Readers");
 	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
 		iReturnCode = iFunctionCode;
 
 	LOG(EDT_LINE_BREAK);
-	LOG(L"<EDT_HWLOG_STOP>\n");
+	LOG(L"<EDT_CALAISREGISTER_STOP>\n");
 	LOG(EDT_LINE_BREAK);
 
 	return iReturnCode;

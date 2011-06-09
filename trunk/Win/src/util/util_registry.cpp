@@ -23,8 +23,14 @@
 #include "log.h"
 #include "Sddl.h"
 
+#define MAX_KEY_LENGTH 255
 #define G_BUFFER_SIZE 32767
 static BYTE g_buffer[G_BUFFER_SIZE];
+
+typedef struct t_MW_DEFINITION {
+	const wchar_t * Label;
+	const wchar_t * Guid;
+} MW_DEFINITION;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// PRIVATE FUNCTIONS DECLARATION ////////////////////////////////////
@@ -34,23 +40,175 @@ void RegistryLogAceMask(DWORD aceMask);
 void RegistryLogAceFlags(DWORD AceFlags);
 void RegistryLogAceSidStart(PSID pSid);
 void RegistryLogGeneralRIDS(LPTSTR stringIdentifierAuthority, DWORD sidSubAuthority);
+BOOL EDT_UtilReg_IsEidmwKeyName(wchar_t * subKeyName);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// PUBLIC FUNCTIONS /////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
+int EDT_UtilReg_LogKeyTree(HKEY hrootKey,const wchar_t* keyName, int flags,int recursion)
+{
+	HKEY hSubKey;
 
-////////////////////////////////////////////////////////////////////////////////////////////////
-// hRootKey values are HKEY_CLASSES_ROOT   HKEY_CURRENT_USER    HKEY_LOCAL_MACHINE    HKEY_USERS 
-////////////////////////////////////////////////////////////////////////////////////////////////
-int registryGetValue(HKEY hRootKey, const wchar_t *wzKey, const wchar_t *wzName, std::wstring *ValueStr)
+	if(recursion > 8)
+	{
+		LOG(L"Recursion greater then 8, won't go any deeper\n");
+		return EDT_OK;
+	}
+	LOG_ENTER();
+	if(recursion == 0)
+		LOG(L"LogKeyTree (%ls\\%ls) \n",hrootKey==HKEY_CURRENT_USER?L"HKCU":L"HKLM",keyName);
+
+	if( RegOpenKeyEx( hrootKey,keyName,0,KEY_READ,&hSubKey) == ERROR_SUCCESS)
+	{
+		TCHAR    subKeyName[MAX_KEY_LENGTH];
+		DWORD    subKeyNameLen=MAX_KEY_LENGTH;  
+		DWORD    nrOfSubKeys;
+		DWORD    maxSubKeySize;
+		DWORD    nrOfValues;
+		DWORD    maxValueSize;
+		DWORD    maxValueDataSize;
+		FILETIME lastWriteTime;
+
+		DWORD i, retVal; 
+
+		retVal = RegQueryInfoKey(
+			hSubKey,                // key handle 
+			NULL,					// buffer for class name 
+			NULL,					// size of class string 
+			NULL,                   // reserved 
+			&nrOfSubKeys,           // number of subkeys 
+			&maxSubKeySize,         // longest subkey size 
+			NULL,					// longest class string 
+			&nrOfValues,            // number of values this key contains
+			&maxValueSize,          // longest value name size
+			&maxValueDataSize,      // longest value data size
+			NULL,					// security descriptor 
+			NULL);					// last write time 
+
+		// Enumerate subKeys 
+		if (nrOfSubKeys)
+		{
+			LOG( L"Number of subkeys: %d\n", nrOfSubKeys);
+
+			for (i=0; i<nrOfSubKeys; i++) 
+			{ 
+				subKeyNameLen=MAX_KEY_LENGTH;
+				retVal = RegEnumKeyEx(hSubKey,i,subKeyName,&subKeyNameLen,NULL,NULL,NULL,&lastWriteTime); 
+				if (retVal == ERROR_SUCCESS) 
+				{
+					switch(flags)
+					{
+					case EDTREGFLAG_EIDMW_ONLY:
+						if(EDT_UtilReg_IsEidmwKeyName(subKeyName) == FALSE)
+						{
+							break;
+						}						
+					default:
+						recursion++;
+						LOG(L"%d)subKeyName: %s\n",i+1,subKeyName);
+						EDT_UtilReg_LogKeyTree(hSubKey,subKeyName,flags,recursion);
+						recursion--;
+						break;
+					}
+				}
+				else
+				{
+					LOG(L"%d)RegEnumKeyEx failed with %d \n",i+1,retVal);
+				}
+			}
+		}
+		// Enumerate key values 
+		if (nrOfValues) 
+		{
+			LOG( L"Number of values: %d\n", nrOfValues);
+			DWORD valueBufferLenInChars =(maxValueSize+1);//1 extra for terminating null character//buffersize in characters
+			wchar_t *valueBuffer = (wchar_t*)malloc(sizeof(wchar_t)*valueBufferLenInChars);
+
+			if(valueBuffer != NULL)
+			{
+				DWORD valueDataBufferLen = maxValueDataSize+4;//4 extra for 2 terminating null characters (unicode)
+				BYTE *valueDataBuffer = (BYTE*)malloc(valueDataBufferLen);
+
+				if (valueDataBuffer != NULL)
+				{
+					retVal=ERROR_SUCCESS;
+					for ( i=0; i < nrOfValues; i++ ) 
+					{ 
+						valueBufferLenInChars = (maxValueSize+1);//1 extra for terminating null character
+						retVal = RegEnumValue(hSubKey,i,valueBuffer,&valueBufferLenInChars,NULL,NULL,NULL,NULL);
+						if (retVal == ERROR_SUCCESS ) 
+						{ 							
+							DWORD dwType = REG_NONE;
+							valueDataBufferLen = maxValueDataSize+4;//4 extra for 2 terminating null characters (unicode)
+							retVal = RegQueryValueEx(hSubKey, valueBuffer, 0L, &dwType, valueDataBuffer, &valueDataBufferLen);
+							if(retVal != ERROR_SUCCESS)
+							{     
+								LOG(L"(%d)(???) %s: \n", i+1, valueBuffer); 
+								LOG(L"RegQueryValueEx failed %d\n",retVal);
+							}
+							else
+							{
+								wchar_t * multiStringPart = (wchar_t *)valueDataBuffer;
+								unsigned int multistringtcharcounter = 0;
+								switch(dwType)
+								{
+								case REG_SZ:
+									valueDataBuffer[valueDataBufferLen]='\0';
+									valueDataBuffer[valueDataBufferLen+1]='\0';
+									LOG(L"(%d)(REG_SZ) %s: %ls\n",i+1,valueBuffer,valueDataBuffer);
+									break;
+								case REG_EXPAND_SZ:
+									valueDataBuffer[valueDataBufferLen]='\0';
+									valueDataBuffer[valueDataBufferLen+1]='\0';
+									valueDataBuffer[valueDataBufferLen+2]='\0';
+									valueDataBuffer[valueDataBufferLen+3]='\0';
+
+									while( *multiStringPart != '\0')
+									{					
+										LOG(L"(%d)(REG_EXPAND_SZ) %s: %ls\n",i+1,valueBuffer,multiStringPart);
+										multiStringPart += (wcslen(multiStringPart)+1);
+									}
+									break;
+								case REG_DWORD:
+									LOG(L"(%d)(REGWORD) %s: %ld\n",i+1,valueBuffer,*(DWORD*)valueDataBuffer);
+									break;
+								default:
+									LOG(L"(%d)(REGUNMANAGED) %s: %ls\n",i+1,valueBuffer,valueDataBuffer);
+									LOG_ERROR(L"Unmanaged data type");
+								}
+							}
+						}
+						else
+						{
+							LOG(L"(%d) RegEnumValue failed\n",i+1);
+						}
+					}
+					free(valueDataBuffer);
+				}		
+				else
+				{
+					LOG_ERROR(L"malloc valueDataBuffer failed\n");
+				}
+				free(valueBuffer);
+			}
+			else
+			{
+				LOG_ERROR(L"malloc valueBuffer failed\n");
+			}
+		}
+		RegCloseKey(hSubKey);
+	}
+	LOG_EXIT(EDT_OK);
+	return EDT_OK;
+}
+
+int EDT_UtilReg_LogValue(HKEY hRootKey, const wchar_t *wzKey, const wchar_t *wzName)
 {
 	int iReturnCode = EDT_OK;
 	int err = ERROR_SUCCESS;
 
 	HKEY hRegKey;
-	LOG_TIME(L"Ask for registry value (%ls\\%ls@%ls) --> ",hRootKey==HKEY_CURRENT_USER?L"HKCU":L"HKLM",wzKey,wzName);
-	if(ValueStr == NULL)
-		return EDT_ERR_BAD_PARAM;
+	LOG(L"registryGetValue (%ls\\%ls@%ls) \n",hRootKey==HKEY_CURRENT_USER?L"HKCU":L"HKLM",wzKey,wzName);
 
 	if(ERROR_SUCCESS != (err = RegOpenKeyEx(hRootKey, wzKey, 0L, KEY_READ , &hRegKey)))
 	{
@@ -61,43 +219,56 @@ int registryGetValue(HKEY hRootKey, const wchar_t *wzKey, const wchar_t *wzName,
 		}
 		else
 		{
-			LOG(L"NOT FOUND\n");
+			LOG_ERRORCODE(L"RegOpenKeyEx failed, file not found",err);
 			return EDT_ERR_REGISTRY_NOT_FOUND;
 		}
 	}
-	ValueStr->clear();
 	//--- get the value
 	DWORD dwType = REG_NONE;
-	DWORD dwValDatLen = G_BUFFER_SIZE; 
-	if(ERROR_SUCCESS != (err = RegQueryValueEx(hRegKey, wzName, 0L, &dwType, g_buffer, &dwValDatLen)))
+	DWORD dwValDatLen = G_BUFFER_SIZE-4; 
+	err = RegQueryValueEx(hRegKey, wzName, 0L, &dwType, g_buffer, &dwValDatLen);
+	if(err != ERROR_SUCCESS)
 	{     
-		LOG_ERRORCODE(L"RegQueryValueEx failed",err);
-		iReturnCode = EDT_ERR_REGISTRY_READ_FAILED;
+		switch(err)
+		{
+			case ERROR_FILE_NOT_FOUND:
+				//LOG(L"File not found\n");
+				iReturnCode = EDT_ERR_REGISTRY_NOT_FOUND;
+				break;
+			default:
+				LOG(L"RegQueryValueEx failed %d\n",err);
+				iReturnCode = EDT_ERR_REGISTRY_READ_FAILED;
+		}	
 	}
 	else
 	{
+		wchar_t * multiStringPart = (wchar_t *)g_buffer;
+		unsigned int multistringtcharcounter = 0;
 		switch(dwType)
 		{
 		case REG_SZ:
+			g_buffer[dwValDatLen]='\0';
+			g_buffer[dwValDatLen+1]='\0';
+			LOG(L"(REG_SZ) %s: %ls\n",wzName,g_buffer);
+			break;
 		case REG_EXPAND_SZ:
-			ValueStr->append((wchar_t*)g_buffer);
-			LOG(L"DONE\n");
+			g_buffer[dwValDatLen]='\0';
+			g_buffer[dwValDatLen+1]='\0';
+			g_buffer[dwValDatLen+2]='\0';
+			g_buffer[dwValDatLen+3]='\0';
+
+			while( *multiStringPart != '\0')
+			{					
+				LOG(L"(REG_EXPAND_SZ) %s: %ls\n",wzName,multiStringPart);
+				multiStringPart += (wcslen(multiStringPart)+1);
+			}
 			break;
 		case REG_DWORD:
-			wchar_t buf[16];
-			if(-1==swprintf_s(buf,16,L"%ld",*(DWORD*)g_buffer))
-			{
-				LOG_ERROR(L"swprintf_s failed");
-			}
-			else
-			{
-				ValueStr->append(buf);
-			}
-			LOG(L"DONE\n");
+			LOG(L"(REGWORD) %s: %ld\n",wzName,*(DWORD*)g_buffer);
 			break;
 		default:
+			LOG(L"(REGUNMANAGED) %s: %ls\n",wzName,g_buffer);
 			LOG_ERROR(L"Unmanaged data type");
-			iReturnCode = EDT_ERR_NOT_AVAILABLE;
 		}
 	}
 
@@ -109,7 +280,7 @@ int registryGetValue(HKEY hRootKey, const wchar_t *wzKey, const wchar_t *wzName,
 	return iReturnCode;
 } 
 
-int registryLogPermissions(HKEY hRootKey, const wchar_t *wzKey)
+int EDT_UtilReg_LogPermissions(HKEY hRootKey, const wchar_t *wzKey)
 {
 	int iReturnCode = EDT_OK;
 	int err = ERROR_SUCCESS;
@@ -650,4 +821,35 @@ void RegistryLogAceFlags(DWORD AceFlags)
 		LOG(L"FAILED_ACCESS_ACE_FLAG\n");
 
 	LogDecIndent();
+}
+
+BOOL EDT_UtilReg_IsEidmwKeyName(wchar_t * subKeyName)
+{
+	int counter = 0;
+	const int MW_DefLen = 12;
+	const MW_DEFINITION MW_Def[12] =
+	{
+		{L"2.3",					L"{44CFED0B-BF92-455B-94D3-FA967A81712E}"},
+		{L"2.4",					L"{BA42ACEA-3782-4CAD-AA10-EBC2FA14BB7E}"},
+		{L"2.5",					L"{85D158F2-648C-486A-9ECC-C5D4F4ACC965}"},
+		{L"2.6",					L"{EA248851-A7D5-4906-8C46-A3CA267F6A24}"},	
+		{L"3.0",					L"{82493A8F-7125-4EAD-8B6D-E9EA889ECD6A}"},
+		{L"3.5 \"IS version\"",		L"{40420E84-2E4C-46B2-942C-F1249E40FDCB}"},
+		{L"3.5 Pro \"IS version\"",	L"{4C2FBD23-962C-450A-A578-7556BC79B8B2}"},
+		{L"3.5",					L"{824563DE-75AD-4166-9DC0-B6482F2DED5A}"},	
+		{L"3.5 Pro",				L"{FBB5D096-1158-4e5e-8EA3-C73B3F30780A}"},
+		{L"3.5.x",					L"{824563DE-75AD-4166-9DC0-B6482F20"},
+		{L"3.5.x Pro",				L"{FBB5D096-1158-4e5e-8EA3-C73B3F30"},
+		{L"minidriver",				L"{842C2A79-289B-4cfa-9158-349B73F"}
+	};
+	for (;counter < MW_DefLen ; counter++)
+	{
+		if (wcsncmp(subKeyName, MW_Def[counter].Guid, wcslen(MW_Def[counter].Guid)) == 0 )
+		{
+			LOG(L"Eidmw version %s found\n",MW_Def[counter].Label);
+			return TRUE;
+		}
+	}
+	return FALSE;
+
 }
