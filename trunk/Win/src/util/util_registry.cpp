@@ -41,6 +41,7 @@ void RegistryLogAceFlags(DWORD AceFlags);
 void RegistryLogAceSidStart(PSID pSid);
 void RegistryLogGeneralRIDS(LPTSTR stringIdentifierAuthority, DWORD sidSubAuthority);
 BOOL EDT_UtilReg_IsEidmwKeyName(wchar_t * subKeyName);
+void EDT_UtilReg_LogValueData(const wchar_t* value, BYTE* data,DWORD dwDataLen, DWORD dwType );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// PUBLIC FUNCTIONS /////////////////////////////////////////////////
@@ -148,34 +149,7 @@ int EDT_UtilReg_LogKeyTree(HKEY hrootKey,const wchar_t* keyName, int flags,int r
 							}
 							else
 							{
-								wchar_t * multiStringPart = (wchar_t *)valueDataBuffer;
-								unsigned int multistringtcharcounter = 0;
-								switch(dwType)
-								{
-								case REG_SZ:
-									valueDataBuffer[valueDataBufferLen]='\0';
-									valueDataBuffer[valueDataBufferLen+1]='\0';
-									LOG(L"(%d)(REG_SZ) %s: %ls\n",i+1,valueBuffer,valueDataBuffer);
-									break;
-								case REG_EXPAND_SZ:
-									valueDataBuffer[valueDataBufferLen]='\0';
-									valueDataBuffer[valueDataBufferLen+1]='\0';
-									valueDataBuffer[valueDataBufferLen+2]='\0';
-									valueDataBuffer[valueDataBufferLen+3]='\0';
-
-									while( *multiStringPart != '\0')
-									{					
-										LOG(L"(%d)(REG_EXPAND_SZ) %s: %ls\n",i+1,valueBuffer,multiStringPart);
-										multiStringPart += (wcslen(multiStringPart)+1);
-									}
-									break;
-								case REG_DWORD:
-									LOG(L"(%d)(REGWORD) %s: %ld\n",i+1,valueBuffer,*(DWORD*)valueDataBuffer);
-									break;
-								default:
-									LOG(L"(%d)(REGUNMANAGED) %s: %ls\n",i+1,valueBuffer,valueDataBuffer);
-									LOG_ERROR(L"Unmanaged data type");
-								}
+								EDT_UtilReg_LogValueData(valueBuffer, valueDataBuffer, valueDataBufferLen,  dwType);
 							}
 						}
 						else
@@ -242,34 +216,7 @@ int EDT_UtilReg_LogValue(HKEY hRootKey, const wchar_t *wzKey, const wchar_t *wzN
 	}
 	else
 	{
-		wchar_t * multiStringPart = (wchar_t *)g_buffer;
-		unsigned int multistringtcharcounter = 0;
-		switch(dwType)
-		{
-		case REG_SZ:
-			g_buffer[dwValDatLen]='\0';
-			g_buffer[dwValDatLen+1]='\0';
-			LOG(L"(REG_SZ) %s: %ls\n",wzName,g_buffer);
-			break;
-		case REG_EXPAND_SZ:
-			g_buffer[dwValDatLen]='\0';
-			g_buffer[dwValDatLen+1]='\0';
-			g_buffer[dwValDatLen+2]='\0';
-			g_buffer[dwValDatLen+3]='\0';
-
-			while( *multiStringPart != '\0')
-			{					
-				LOG(L"(REG_EXPAND_SZ) %s: %ls\n",wzName,multiStringPart);
-				multiStringPart += (wcslen(multiStringPart)+1);
-			}
-			break;
-		case REG_DWORD:
-			LOG(L"(REGWORD) %s: %ld\n",wzName,*(DWORD*)g_buffer);
-			break;
-		default:
-			LOG(L"(REGUNMANAGED) %s: %ls\n",wzName,g_buffer);
-			LOG_ERROR(L"Unmanaged data type");
-		}
+		EDT_UtilReg_LogValueData(wzName, g_buffer, dwValDatLen,  dwType);
 	}
 
 	if(ERROR_SUCCESS != (err = RegCloseKey(hRegKey)))
@@ -821,6 +768,37 @@ void RegistryLogAceFlags(DWORD AceFlags)
 		LOG(L"FAILED_ACCESS_ACE_FLAG\n");
 
 	LogDecIndent();
+}
+
+void EDT_UtilReg_LogValueData(const wchar_t* value, BYTE* data,DWORD dwDataLen, DWORD dwType )
+{
+	wchar_t * multiStringPart = (wchar_t *)data;
+	unsigned int multistringtcharcounter = 0;
+	switch(dwType)
+	{
+	case REG_SZ:
+		data[dwDataLen]='\0';
+		data[dwDataLen+1]='\0';
+		LOG(L"(REG_SZ) %s: %ls\n",value,data);
+		break;
+	case REG_EXPAND_SZ:
+		data[dwDataLen]='\0';
+		data[dwDataLen+1]='\0';
+		data[dwDataLen+2]='\0';
+		data[dwDataLen+3]='\0';
+		while( *multiStringPart != '\0')
+		{					
+			LOG(L"(REG_EXPAND_SZ) %s: %ls\n",value,multiStringPart);
+			multiStringPart += (wcslen(multiStringPart)+1);
+		}
+		break;
+	case REG_DWORD:
+		LOG(L"(REGWORD) %s: %ld\n",value,*(DWORD*)data);
+		break;
+	default:
+		LOG(L"(REGUNMANAGED) %s: %ls\n",value,data);
+		LOG_ERROR(L"Unmanaged data type");
+	}
 }
 
 BOOL EDT_UtilReg_IsEidmwKeyName(wchar_t * subKeyName)
