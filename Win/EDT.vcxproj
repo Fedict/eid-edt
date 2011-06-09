@@ -171,6 +171,7 @@
     <ClInclude Include="src\calaisregister.h" />
     <ClInclude Include="src\Resource.h" />
     <ClInclude Include="src\services.h" />
+    <ClInclude Include="src\software.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\system.h" />
     <ClInclude Include="src\util\util_pcsc.h" />
@@ -190,6 +191,7 @@
     <ClCompile Include="src\process.cpp" />
     <ClCompile Include="src\calaisregister.cpp" />
     <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\software.cpp" />
     <ClCompile Include="src\system.cpp" />
     <ClCompile Include="src\util\util_pcsc.cpp" />
     <ClCompile Include="src\util\util_process.cpp" />

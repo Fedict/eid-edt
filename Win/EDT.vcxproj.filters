@@ -83,6 +83,9 @@
     <ClInclude Include="src\calaisregister.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\software.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\hardware.cpp">
@@ -131,6 +134,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\calaisregister.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\software.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
