@@ -86,6 +86,9 @@
     <ClInclude Include="src\software.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\devices.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\hardware.cpp">
@@ -137,6 +140,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\software.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\devices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
