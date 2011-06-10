@@ -291,10 +291,8 @@ void PrintSlotInfo(CK_SLOT_INFO *slotInfo)
 	CK_UTF8CHAR printbuffer[65];
 
 	strncpy_s((char*)printbuffer,65,(const char*)(slotInfo->slotDescription),64);
-	printbuffer[64] = '\0';
 	LOG(L"slotDescription: %hs\n",printbuffer);
 	strncpy_s((char*)printbuffer,65,(const char*)(slotInfo->manufacturerID),32);
-	printbuffer[32] = '\0';
 	LOG(L"manufacturerID: %hs\n",printbuffer);
 
 	LOG(L"flags 0x%x\n",slotInfo->flags);
@@ -307,16 +305,12 @@ void PrintTokenInfo(CK_TOKEN_INFO *tokenInfo)
 	CK_UTF8CHAR printbuffer[33];
 
 	strncpy_s((char*)printbuffer,33,(const char*)(tokenInfo->label),32);
-	printbuffer[32] = '\0';
 	LOG(L"label: %hs\n",printbuffer);
 	strncpy_s((char*)printbuffer,33,(const char*)(tokenInfo->manufacturerID),32);
-	printbuffer[32] = '\0';
 	LOG(L"manufacturerID: %hs\n",printbuffer);
 	strncpy_s((char*)printbuffer,33,(const char*)(tokenInfo->model),16);
-	printbuffer[16] = '\0';
 	LOG(L"model: %hs\n",printbuffer);
 	strncpy_s((char*)printbuffer,33,(const char*)(tokenInfo->serialNumber),16);
-	printbuffer[16] = '\0';
 	LOG(L"serialNumber: %hs\n",printbuffer);
 	LOG(L"flags: 0x%x\n",tokenInfo->flags);
 
@@ -340,6 +334,5 @@ void PrintTokenInfo(CK_TOKEN_INFO *tokenInfo)
 	LOG(L"firmwareVersion: %d.%d \n",tokenInfo->firmwareVersion.major,tokenInfo->firmwareVersion.minor);
 
 	strncpy_s((char*)printbuffer,33,(const char*)(tokenInfo->utcTime),16);
-	printbuffer[16] = '\0';
 	LOG(L"utcTime: %hs\n",printbuffer);
 }

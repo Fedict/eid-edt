@@ -29,7 +29,7 @@ int EDT_StartCalaisRegisterLog()
 	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_CALAISREGISTER_START>\n");
 	LOG(EDT_LINE_BREAK);
-	LOG_SCREEN(L"gathering registry info...\r\n");
+	LOG_SCREEN(L"gathering calais register info...\r\n");
 
 	int iReturnCode = EDT_OK;
 	int iFunctionCode = EDT_OK;

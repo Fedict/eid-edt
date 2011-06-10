@@ -41,6 +41,9 @@ void RegistryLogAceFlags(DWORD AceFlags);
 void RegistryLogAceSidStart(PSID pSid);
 void RegistryLogGeneralRIDS(LPTSTR stringIdentifierAuthority, DWORD sidSubAuthority);
 BOOL EDT_UtilReg_IsEidmwKeyName(wchar_t * subKeyName);
+//As not all registry retrieval functions guarantee null terminated data,
+//1 null character (2bytes) will be added behind REG_SZ data (starting at dwDataLen bytes)
+//2 null characters (4bytes) will be added behind REG_MULTI_SZ data (starting at dwDataLen bytes)
 void EDT_UtilReg_LogValueData(const wchar_t* value, BYTE* data,DWORD dwDataLen, DWORD dwType );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
