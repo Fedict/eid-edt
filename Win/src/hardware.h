@@ -22,4 +22,4 @@
 
 int EDT_StartHWLog();
 
-#endif //__DIAGLIB_HW_H__
+#endif //__EDT_HW_H__
