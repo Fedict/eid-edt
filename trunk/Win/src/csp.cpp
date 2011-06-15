@@ -103,7 +103,7 @@ int EDT_CSP_FindCards()
 	DWORD err;
 	HCRYPTPROV hProv = NULL;
 	//Get a context
-	if (CryptAcquireContext(&hProv, NULL, L"Belgium Identity Card CSP", PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) != TRUE) 
+	if (CryptAcquireContext(&hProv, NULL, L"Belgium Identity Card CSP", PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) == FALSE) 
 	{
 		err = GetLastError();
 		LOG(L"CryptAcquireContext \"Belgium Identity Card CSP\" failed with %d\n",err);
@@ -116,10 +116,14 @@ int EDT_CSP_FindCards()
 		}
 		if(iRetVal == EDT_OK)
 		{
-			EDT_CSP_ReadParam(hProv,PP_SMARTCARD_READER);	
-			EDT_CSP_ReadParam(hProv,PP_SMARTCARD_GUID);
-			EDT_CSP_ReadParam(hProv,PP_USER_CERTSTORE);			
+			EDT_CSP_ReadParam(hProv,PP_SMARTCARD_READER);//PP_SMARTCARD_READER not supported for WinXP, no minidriver there	
+			EDT_CSP_ReadParam(hProv,PP_SMARTCARD_GUID);//PP_SMARTCARD_GUID not supported for WinXP, no minidriver there	
+			EDT_CSP_ReadParam(hProv,PP_USER_CERTSTORE);//PP_USER_CERTSTORE not supported for WinXP, no minidriver there			
 		}
+	}
+	else
+	{
+		LOG(L"CryptAcquireContext \"Belgium Identity Card CSP\" found\n");
 	}
 	if (hProv!=NULL && !CryptReleaseContext(hProv, 0))
 	{
