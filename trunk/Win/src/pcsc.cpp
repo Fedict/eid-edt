@@ -81,6 +81,7 @@ int EDT_StartPCSCLog()
 
 	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_PCSCLOG_STOP>\n\n");
+	LOG(EDT_LINE_BREAK);
 
 	return iReturnCode;
 }
