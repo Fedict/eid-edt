@@ -32,6 +32,7 @@
 #include "certstore.h"
 #include "services.h"
 #include "pkcs_11.h"
+#include "csp.h"
 
 // Forward declarations of functions included in this code module:
 DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
@@ -54,6 +55,7 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 	EDT_StartServicesLog();
 	EDT_StartPCSCLog();
 	EDT_StartPKCS11Log();
+	EDT_StartCSPLog();
 
 	logFinalize(htextWnd);
 
