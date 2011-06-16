@@ -72,6 +72,7 @@ int EDT_StartPKCS11Log()
 
 	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_PKCS11LOG_STOP>\n");
+	LOG(EDT_LINE_BREAK);
 	return iReturnCode;
 }
 
