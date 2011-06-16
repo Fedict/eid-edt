@@ -47,6 +47,7 @@ int EDT_StartprocessLog()
 
 	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_PROCESSLOG_STOP>\n");
+	LOG(EDT_LINE_BREAK);
 
 	return iReturnCode;
 }
