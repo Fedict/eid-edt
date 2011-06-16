@@ -22,6 +22,19 @@
 #include "log.h"
 #include "eidmw.h"
 #include "util_registry.h"
+#include <shlobj.h>
+#include <stdio.h>
+#include <io.h>
+#include <time.h>
+
+#define TIME_BUF_SIZE 26
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// PRIVATE FUNCTIONS ////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+int EDT_EIDMW_FindFile(const wchar_t *fileName, const wchar_t *folderName );
+int EDT_EIDMW_LogEidmwFiles(void);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// PUBLIC FUNCTIONS /////////////////////////////////////////////////
@@ -46,16 +59,222 @@ int EDT_StartEidmwLog()
 	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
 		iReturnCode = iFunctionCode;
 
+	LOG(EDT_HALF_LINE_BREAK);
+
+	iFunctionCode = EDT_EIDMW_LogEidmwFiles();
+	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
+		iReturnCode = iFunctionCode;
+
 	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_EIDMWLOG_STOP>\n");
 	LOG(EDT_LINE_BREAK);
 
 	return iReturnCode;
 }
+//eidmw related files
+
+int EDT_EIDMW_FindFile(const wchar_t *fileName, const wchar_t *folderName )
+{
+	DWORD filePathNameLen = wcslen(fileName) + wcslen(folderName) + 2;//extra bytes: for '\' and for ending NULL
+	wchar_t* filePathName;
+	struct _wfinddata_t c_file;
+	long hFile;
+	int iReturnCode = EDT_OK;
+	wchar_t timeBuf[TIME_BUF_SIZE];
+
+	filePathName = (wchar_t*)malloc(filePathNameLen*sizeof(wchar_t));
+	if(filePathName == NULL)
+	{
+		LOG_ERROR(L"EDT_EIDMW_FindFile malloc failed\n");
+		return EDT_ERR_INTERNAL;
+	}
+	if(wcsncpy_s(filePathName,filePathNameLen,folderName,wcslen(folderName))!=0)
+	{
+		LOG_ERROR(L"EDT_EIDMW_FindFile %s wcsncpy_s failed\n");
+		LOG(L"file to find was %s\n",fileName);
+		iReturnCode = EDT_ERR_INTERNAL;
+	}
+	else if(wcscat_s(filePathName,filePathNameLen,L"\\") != 0) //Ending by slash
+	{		
+		LOG_ERROR(L"EDT_EIDMW_FindFile %s wcscat_s failed\n");
+		LOG(L"file to find was %s\n",fileName);
+		iReturnCode = EDT_ERR_INTERNAL;
+	}
+	else if(wcscat_s(filePathName,filePathNameLen,fileName) != 0)
+	{		
+		LOG_ERROR(L"EDT_EIDMW_FindFile %s wcscat_s 2e failed\n");
+		LOG(L"file to find was %s\n",fileName);
+		iReturnCode = EDT_ERR_INTERNAL;
+	}
+	if(iReturnCode == EDT_OK)
+	{
+		hFile = _wfindfirst( filePathName, &c_file );
+		if( hFile == -1L )
+		{
+			LOG( L"didn't find %s\n",filePathName );
+		}
+		else
+		{
+			LOG( L"Found: %s\n",filePathName );
+			LogIncIndent();
+			LOG( L"file length: %d\n",c_file.size );
+			
+			if (_wctime_s(timeBuf,TIME_BUF_SIZE, &(c_file.time_create) ) == 0 )
+				LOG( L"create time: %s",timeBuf);
+			if (_wctime_s(timeBuf,TIME_BUF_SIZE, &(c_file.time_access) ) == 0 )
+				LOG( L"access time: %s",timeBuf);
+			if (_wctime_s(timeBuf,TIME_BUF_SIZE, &(c_file.time_write) ) == 0 )
+				LOG( L"write time: %s",timeBuf);
+			LOG( L"file attributes:\n");
+			if(c_file.attrib & _A_ARCH)
+				LOG( L"_A_ARCH : Archive (file is changed or cleared by the BACKUP command)\n" );
+			if(c_file.attrib & _A_HIDDEN)
+				LOG( L"_A_HIDDEN : Hidden file\n" );
+			if(c_file.attrib & _A_NORMAL)
+				LOG( L"_A_NORMAL : Normal file\n" );
+			if(c_file.attrib & _A_RDONLY)
+				LOG( L"_A_RDONLY : read only file\n" );
+			if(c_file.attrib & _A_SUBDIR)
+				LOG( L"_A_SUBDIR : Subdirectory\n" );
+			if(c_file.attrib & _A_SYSTEM)
+				LOG( L"_A_SYSTEM : System file\n" );
+			_findclose( hFile );
+			LogDecIndent();
+		}
+	}
+	free(filePathName);
+	return iReturnCode;
+}
+
+
+int EDT_EIDMW_LogEidmwFiles(void)
+{
+	int iReturnCode=EDT_OK;
+	wchar_t theSystemFolder[MAX_PATH];
+	wchar_t theApplicationsFolder[MAX_PATH];
+
+	if(!SHGetSpecialFolderPath(NULL,theSystemFolder,CSIDL_SYSTEM,FALSE))
+	{
+		LOG_ERROR(L"System folder not found");
+		iReturnCode = EDT_ERR_INTERNAL;
+	}
+	if(iReturnCode == EDT_OK)
+	{
+		LOG(L"Eidmw Files\n");
+		LogIncIndent();
+		EDT_EIDMW_FindFile(L"Belgium Identity Card CSP.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"Belgium Identity Card PKCS11.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"Belpic PCSC Service.exe", theSystemFolder );
+		EDT_EIDMW_FindFile(L"belpic.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"eidlib.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"EIDLibCtrl.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"eidlibj.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"eidlibj.dll.manifest", theSystemFolder );
+		EDT_EIDMW_FindFile(L"eid_libeay32.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"eid_ssleay32.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"pinpad_emulator.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"winscarp.dll", theSystemFolder );
+		LogDecIndent();
+
+		LOG(L"Eidmw 2.4 Files\n");
+		LogIncIndent();
+		EDT_EIDMW_FindFile(L"BelgianEID.cfg", theSystemFolder );
+		EDT_EIDMW_FindFile(L"belpicgui.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"shbelpicgui.exe", theSystemFolder );
+		LogDecIndent();
+
+		LOG(L"Eidmw 2.5/2.6 Files\n");
+		LogIncIndent();
+		EDT_EIDMW_FindFile(L"beidcsp.conf", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidcsp.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidgui.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidlib.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidlibaxctrl.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidlibeay32.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidlibjni.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidlibjni.dll.manifest", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidlibopensc.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidpkcs11.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidservicecrl.exe", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidservicepcsc.exe", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidssleay32.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidwinscard.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"shbeidgui.exe", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidgui.exe", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidsystemtray.exe", theSystemFolder );
+		LogDecIndent();
+
+		LOG(L"Eidmw 3.0 Files\n");
+		LogIncIndent();
+		EDT_EIDMW_FindFile(L"beidapplayer.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidcardlayer.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidcommon.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidCSPlib.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidDlgsWin32.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidlibJava_Wrapper.dll", theSystemFolder );
+		LogDecIndent();
+
+		LOG(L"Eidmw 3.5 Files\n");
+		LogIncIndent();
+		EDT_EIDMW_FindFile(L"beid35applayer.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beid35cardlayer.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beid35common.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beid35DlgsWin32.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"siscardplugins\\siscardplugin1_BE_EID_35__ACS_ACR38U__.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"siscardplugins\\siscardplugin1_BE_EID_35__ACS ACR38U__.dll", theSystemFolder );
+		LogDecIndent();
+
+		LOG(L"Eidmw minidriver Files\n");
+		LogIncIndent();
+		EDT_EIDMW_FindFile(L"beidmdrv.dll", theSystemFolder );
+		LogDecIndent();
+	}
+	if(!SHGetSpecialFolderPath(NULL,theApplicationsFolder,CSIDL_PROGRAM_FILES,FALSE))
+	{
+		LOG_ERROR(L"System folder not found");
+		iReturnCode = EDT_ERR_INTERNAL;
+	}
+	if(iReturnCode == EDT_OK)
+	{
+		LOG(L"Eidmw 2.3 Files\n");
+		LogIncIndent();
+		EDT_EIDMW_FindFile(L"beid35gui.exe", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"beid35libCpp.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"eid.ico", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"beidoutlooksnc.exe", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"beid-pkcs11-register.html", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"beid-pkcs11-unregister.html", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"eidmw_en.qm", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"eidmw_nl.qm", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"eidmw_fr.qm", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"eidmw_de.qm", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"License_en.rtf", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"License_nl.rtf", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"License_fr.rtf", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"License_de.rtf", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"THIRDPARTY-LICENSES.txt", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"QtCore4.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"QtGui4.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"imageformats\\qjpeg4.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"beidlib.jar", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"eidlib.jar", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"BEID_old.html", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"XAdESLib.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"beidlibC.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"x509ac.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"XalanC_1_10.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"XalanMessages_1_10.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"xercesc_2_7.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"xsec_1_4_0.dll", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"libeay32.dll", theApplicationsFolder );
+		LogDecIndent();
+	}
+	return iReturnCode;
+}
 
 /*
-eidmw related services, processes and files
-TODO: search for these too
+eidmw related services and processes
+TODO: search for these too (already part of other loggings, but might be nice for the overview)
 //Stop and remove the services
 if(RETURN_OK!= (nRetCode = StopAndRemoveService(L"BELGIUM_ID_CARD_SERVICE",	g_lTimeout)))	goto end;
 if(RETURN_OK!= (nRetCode = StopAndRemoveService(L"eID Privacy Service",		g_lTimeout)))	goto end;
@@ -79,112 +298,4 @@ if(RETURN_OK!= (nRetCode = LibraryUsage(L"BELGIUM IDENTITY CARD CSP.DLL",	g_bFor
 if(RETURN_OK!= (nRetCode = LibraryUsage(L"BELPIC.DLL",						g_bForceRemove)))	goto end;	//2.3, 2.4
 
 
-
-
-//Uninstall
-if(RETURN_OK!= (nRetCode = Uninstall(L"2.3",    L"{44CFED0B-BF92-455B-94D3-FA967A81712E}",INSTALLTYPE_MSI,		0,			g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-if(RETURN_OK!= (nRetCode = Uninstall(L"2.4",    L"{BA42ACEA-3782-4CAD-AA10-EBC2FA14BB7E}",INSTALLTYPE_IS_MSI,	IDR_ISS_24,	g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-if(RETURN_OK!= (nRetCode = Uninstall(L"2.5",    L"{85D158F2-648C-486A-9ECC-C5D4F4ACC965}",INSTALLTYPE_IS_MSI,	IDR_ISS_25,	g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-if(RETURN_OK!= (nRetCode = Uninstall(L"2.6",    L"{EA248851-A7D5-4906-8C46-A3CA267F6A24}",INSTALLTYPE_IS_MSI,	IDR_ISS_26,	g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-if(RETURN_OK!= (nRetCode = Uninstall(L"3.0",    L"{82493A8F-7125-4EAD-8B6D-E9EA889ECD6A}",INSTALLTYPE_IS,		IDR_ISS_30,	g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-if(RETURN_OK!= (nRetCode = Uninstall(L"3.5",    L"{40420E84-2E4C-46B2-942C-F1249E40FDCB}",INSTALLTYPE_IS,		IDR_ISS_35,	g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-if(RETURN_OK!= (nRetCode = Uninstall(L"3.5 Pro",L"{4C2FBD23-962C-450A-A578-7556BC79B8B2}",INSTALLTYPE_IS,		IDR_ISS_35P,g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-//if(RETURN_OK!= (nRetCode = Uninstall(L"3.5",	L"{824563DE-75AD-4166-9DC0-B6482F2DED5A}",INSTALLTYPE_MSI,		0,			g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-if(RETURN_OK!= (nRetCode = Uninstall(L"3.5 Pro",L"{FBB5D096-1158-4e5e-8EA3-C73B3F30780A}",INSTALLTYPE_MSI,		0,			g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-
-if(RETURN_OK!= (nRetCode = SearchAndUninstall(L"3.5",    L"{824563DE-75AD-4166-9DC0-B6482F2?????}",	g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-if(RETURN_OK!= (nRetCode = SearchAndUninstall(L"3.5 Pro",L"{FBB5D096-1158-4e5e-8EA3-C73B3F3?????}",	g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-if(RETURN_OK!= (nRetCode = SearchAndUninstall(L"minidriver",L"{842C2A79-289B-4cfa-9158-349B73F?????}", g_lTimeout,g_csKeepGuid,&g_bRebootNeeded)))	goto end;
-
-if(g_bForceRemove && wcscmp(g_csKeepGuid,L"")==0)
-{
-//Delete the remaining files 2.3
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"Belgium Identity Card CSP.dll")))		goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"Belgium Identity Card PKCS11.dll")))	goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"Belpic PCSC Service.exe")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"belpic.dll")))						goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"eidlib.dll")))						goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"EIDLibCtrl.dll")))					goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"eidlibj.dll")))						goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"eidlibj.dll.manifest")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"eid_libeay32.dll")))					goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"eid_ssleay32.dll")))					goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"pinpad_emulator.dll")))				goto end;
-//if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"winscarp.dll")))						goto end;
-
-//Delete the remaining files 2.4
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"BelgianEID.cfg")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"belpicgui.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"shbelpicgui.exe")))			goto end;
-
-//Delete the remaining files 2.5/2.6
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidcsp.conf")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidcsp.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidgui.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidlib.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidlibaxctrl.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidlibeay32.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidlibjni.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidlibjni.dll.manifest")))	goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidlibopensc.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidpkcs11.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidservicecrl.exe")))		goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidservicepcsc.exe")))		goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidssleay32.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidwinscard.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"shbeidgui.exe")))				goto end;
-
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"beidgui.exe")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"beidsystemtray.exe")))		goto end;
-
-//Delete the remaining files 3.0
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidapplayer.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidcardlayer.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidcommon.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidCSPlib.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidDlgsWin32.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidlibJava_Wrapper.dll")))	goto end;
-
-//Delete the remaining files 3.5
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beid35applayer.dll")))		goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beid35cardlayer.dll")))		goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beid35common.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beid35DlgsWin32.dll")))		goto end;
-
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"siscardplugins\\siscardplugin1_BE_EID_35__ACS_ACR38U__.dll"))) goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"siscardplugins\\siscardplugin1_BE_EID_35__ACS ACR38U__.dll"))) goto end;
-
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"beid35gui.exe")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"beid35libCpp.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"eid.ico")))					goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"beidoutlooksnc.exe")))		goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"beid-pkcs11-register.html")))	goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"beid-pkcs11-unregister.html"))) goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"eidmw_en.qm")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"eidmw_nl.qm")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"eidmw_fr.qm")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"eidmw_de.qm")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"License_en.rtf")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"License_nl.rtf")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"License_fr.rtf")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"License_de.rtf")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"THIRDPARTY-LICENSES.txt")))	goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"QtCore4.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"QtGui4.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"imageformats\\qjpeg4.dll")))	goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"beidlib.jar")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"eidlib.jar")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"BEID_old.html")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"XAdESLib.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"beidlibC.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"x509ac.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"XalanC_1_10.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"XalanMessages_1_10.dll")))	goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"xercesc_2_7.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"xsec_1_4_0.dll")))			goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_APP,		L"libeay32.dll")))				goto end;
-
-//Delete the remaining files minidriver
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_SYSTEM32,	L"beidmdrv.dll")))				goto end;
-if(RETURN_OK!= (nRetCode = DeleteFile(FOLDER_WOWSYS64,	L"beidmdrv.dll")))				goto end;
 }*/
