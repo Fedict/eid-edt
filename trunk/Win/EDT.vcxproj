@@ -178,6 +178,7 @@
     <ClInclude Include="src\software.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\system.h" />
+    <ClInclude Include="src\thirdParty.h" />
     <ClInclude Include="src\util\util_pcsc.h" />
     <ClInclude Include="src\util\util_process.h" />
     <ClInclude Include="src\util\util_registry.h" />
@@ -199,6 +200,7 @@
     <ClCompile Include="src\services.cpp" />
     <ClCompile Include="src\software.cpp" />
     <ClCompile Include="src\system.cpp" />
+    <ClCompile Include="src\thirdParty.cpp" />
     <ClCompile Include="src\util\util_pcsc.cpp" />
     <ClCompile Include="src\util\util_process.cpp" />
     <ClCompile Include="src\util\util_registry.cpp" />

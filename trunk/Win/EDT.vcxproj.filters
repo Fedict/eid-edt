@@ -92,6 +92,9 @@
     <ClInclude Include="src\csp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\thirdParty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\hardware.cpp">
@@ -149,6 +152,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\csp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdParty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
