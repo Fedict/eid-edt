@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <io.h>
 #include <time.h>
+#include "util_process.h"
 
 #define TIME_BUF_SIZE 26
 
@@ -65,6 +66,26 @@ int EDT_StartEidmwLog()
 	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
 		iReturnCode = iFunctionCode;
 
+	LOG(EDT_HALF_LINE_BREAK);
+
+	processPresenceMap mapProcessPresence; 
+	mapProcessPresence.insert(processPresenceItem(L"beidgui.exe",false));
+	mapProcessPresence.insert(processPresenceItem(L"beid35gui.exe",false));
+	mapProcessPresence.insert(processPresenceItem(L"beidsystemtray.exe",false));
+	mapProcessPresence.insert(processPresenceItem(L"xsign.exe",false));
+	mapProcessPresence.insert(processPresenceItem(L"beid35xsign.exe",false));
+
+	iFunctionCode = EDT_process_logList(&mapProcessPresence);
+	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
+		iReturnCode = iFunctionCode;
+
+	if (iFunctionCode==EDT_OK)
+	{
+		LOG(L"Eidmw Processes:\n");
+		LogIncIndent();
+		EDT_process_logProcessPresenceMap(&mapProcessPresence);
+		LogDecIndent();
+	}
 	LOG(EDT_LINE_BREAK);
 	LOG(L"<EDT_EIDMWLOG_STOP>\n");
 	LOG(EDT_LINE_BREAK);
@@ -273,29 +294,12 @@ int EDT_EIDMW_LogEidmwFiles(void)
 }
 
 /*
-eidmw related services and processes
-TODO: search for these too (already part of other loggings, but might be nice for the overview)
+eidmw related services
+TODO: search for these too (already part of other loggings, but might be nice for the overview to print them here again)
 //Stop and remove the services
 if(RETURN_OK!= (nRetCode = StopAndRemoveService(L"BELGIUM_ID_CARD_SERVICE",	g_lTimeout)))	goto end;
 if(RETURN_OK!= (nRetCode = StopAndRemoveService(L"eID Privacy Service",		g_lTimeout)))	goto end;
 if(RETURN_OK!= (nRetCode = StopAndRemoveService(L"beidPrivacyFilter",		g_lTimeout)))	goto end;
 if(RETURN_OK!= (nRetCode = StopAndRemoveService(L"eID CRL Service",			g_lTimeout)))	goto end;
-
-//Kill the known process
-if(RETURN_OK!= (nRetCode = KillProcess(L"beidgui.exe")))		goto end;
-if(RETURN_OK!= (nRetCode = KillProcess(L"beid35gui.exe")))		goto end;
-if(RETURN_OK!= (nRetCode = KillProcess(L"beidsystemtray.exe"))) goto end;
-if(RETURN_OK!= (nRetCode = KillProcess(L"xsign.exe")))			goto end;
-if(RETURN_OK!= (nRetCode = KillProcess(L"beid35xsign.exe")))	goto end;
-
-//Check if the library are used (if g_bForceRemove kill the using process)
-if(RETURN_OK!= (nRetCode = LibraryUsage(L"beidmdrv.dll",					g_bForceRemove)))	goto end;	//minidriver
-if(RETURN_OK!= (nRetCode = LibraryUsage(L"beid35common.dll",				g_bForceRemove)))	goto end;	//3.5
-if(RETURN_OK!= (nRetCode = LibraryUsage(L"beidcommon.dll",					g_bForceRemove)))	goto end;	//3.0
-if(RETURN_OK!= (nRetCode = LibraryUsage(L"beidwinscard.dll",				g_bForceRemove)))	goto end;	//2.5, 2.6
-if(RETURN_OK!= (nRetCode = LibraryUsage(L"beidcsp.dll",						g_bForceRemove)))	goto end;	//2.5, 2.6
-if(RETURN_OK!= (nRetCode = LibraryUsage(L"BELGIUM IDENTITY CARD CSP.DLL",	g_bForceRemove)))	goto end;	//2.3, 2.4
-if(RETURN_OK!= (nRetCode = LibraryUsage(L"BELPIC.DLL",						g_bForceRemove)))	goto end;	//2.3, 2.4
-
 
 }*/
