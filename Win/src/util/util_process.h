@@ -20,6 +20,16 @@
 #ifndef __EDT_UTIL_PROCESS_H__
 #define __EDT_UTIL_PROCESS_H__
 
-int EDT_process_logList();
+#include <map>
+
+typedef std::map<const wchar_t*,bool> processPresenceMap;
+typedef std::pair<const wchar_t*,bool> processPresenceItem;
+
+
+//if a map is used, it should be constructed of process names and a boolean
+//the function will set the boolean to true is the process name was found, false otherwise
+//when no map is used, this function logs all processes (and their modules) running on the system
+int EDT_process_logList(processPresenceMap *pProcessPresenceMap = NULL);
+void EDT_process_logProcessPresenceMap(processPresenceMap *pmapProcessPresence);
 
 #endif //__EDT_UTIL_PROCESS_H__

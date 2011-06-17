@@ -22,359 +22,22 @@
 #include <aclapi.h>
 #include "Tlhelp32.h" 
 #include <psapi.h>
-
 #include "util_process.h"
-//#include "error.h"
-//#include "log.h"
-//#include "progress.h"
-
-//#define G_BUFFER_SIZE 32767
-//static TCHAR g_buffer[G_BUFFER_SIZE];
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// PRIVATE FUNCTIONS DECLARATION ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
-/*int processFillList(Proc_LIST *processList, const wchar_t *processName);
-int processWaitFromHandle(HANDLE hHandle, int *exitCode, int waitTimeSecs);*/
-//bool EnableTokenPrivilege(HANDLE htok, LPCTSTR szPrivilege, TOKEN_PRIVILEGES *tpOld);
-//bool EnablePrivilege(LPCTSTR szPrivilege);
 int EDT_LogModules(DWORD dwPID);
-/*int isModuleUsedByProcess(DWORD dwPID, LPCTSTR szLibrary, bool *found);
-bool AdjustDacl(HANDLE h, DWORD dwDesiredAccess);
-HANDLE AdvanceOpenProcess(DWORD pid, DWORD dwAccessRights);*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// PUBLIC FUNCTIONS /////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
-/*int processUsingLibrary(Lib_ID library, Proc_LIST *processList)
-{
-	int iReturnCode = EDT_OK;
-
-	if(library.empty() || processList==NULL)
-	{
-		return EDT_ERR_BAD_PARAM;
-	}
-
-	LOG_TIME(L"Check for use of library '%ls' --> ",library.c_str());
-
-	processList->clear();
-
-	HANDLE hProcessSnap;
-    HANDLE hProcess;
-    PROCESSENTRY32 pe32;
-	bool bUsed=false;
-
-	if(INVALID_HANDLE_VALUE == ( hProcessSnap=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0)))
-	{
-		LOG_LASTERROR(L"CreateToolhelp32Snapshot failed");
-		return EDT_ERR_INTERNAL;
-	}
-
-    pe32.dwSize = sizeof(PROCESSENTRY32);
-
-	//Get progressMax if request
-	int progressMax = 0;
-	if (!Process32First(hProcessSnap, &pe32))
-	{
-		LOG_LASTERROR(L"Process32First failed");
-		if(!CloseHandle( hProcessSnap ))
-		{
-			LOG_LASTERROR(L"CloseHandle failed");
-		}
-		return EDT_ERR_INTERNAL;
-	}
-
-	do
-	{
-		progressMax++;
-	} while (Process32Next(hProcessSnap, &pe32));
-
-
-    if (!Process32First(hProcessSnap, &pe32))
-    {
- 		LOG_LASTERROR(L"Process32First failed");
-		if(!CloseHandle( hProcessSnap ))
-		{
-			LOG_LASTERROR(L"CloseHandle failed");
-		}
-		return EDT_ERR_INTERNAL;
-    }
-
-	progressInit(progressMax);
-
-	int count=0;
-    do
-    {
-		//We avoid the process System because the isModuleUsedByProcess return an error
-		if ( 0 != lstrcmpi(L"System", pe32.szExeFile))
-		{
-			hProcess = AdvanceOpenProcess(pe32.th32ProcessID, PROCESS_ALL_ACCESS);
-			//If we need the exe name, we need pe32.szExeFile
-			if(EDT_OK != isModuleUsedByProcess(pe32.th32ProcessID, library.c_str(),&bUsed))
-			{
-				LOG(L"isModuleUsedByProcess failed with Process '%ls' (pid=%ld)\n",pe32.szExeFile,pe32.th32ProcessID);
-			}
-			else
-			{
-				if(bUsed)
-				{
-					processList->push_back(pe32.th32ProcessID);
-					LOG(L"FOUND Process '%ls' (pid=%ld)\n",pe32.szExeFile,pe32.th32ProcessID);
-				}
-			}
-		}
-		progressIncrement();
-
-    } while (Process32Next(hProcessSnap, &pe32));
-
-	progressRelease();
-
-	if(!CloseHandle( hProcessSnap ))
-	{
-		LOG_LASTERROR(L"CloseHandle failed");
-	}
-
-	if(!bUsed) LOG(L"NOT USED\n");
-
-	return iReturnCode;
-} 
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-int processGetInfo(Proc_ID process, Proc_INFO *info)
-{
-	int iReturnCode = EDT_OK;
-
-	if(process == 0)
-	{
-		return EDT_ERR_BAD_PARAM;
-	}
-
-	if(info==NULL)
-	{
-		return EDT_ERR_BAD_PARAM;
-	}
-
-	LOG_TIME(L"Ask info on pid=%ld --> ",process);
-	
-	DWORD  bufferSize;
-
-	HANDLE hHandle = NULL;
-	if(NULL == (hHandle = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,0,process)))
-	{
-		if(ERROR_ACCESS_DENIED != GetLastError())
-		{
-			LOG_LASTERROR(L"OpenProcess failed");
-			return EDT_ERR_INTERNAL;
-		}
-		else
-		{
-			LOG(L"ACCESS DENIED\n");
-			return DIAGLIB_ERR_PROCESS_ACCESS_DENIED;
-		}
-	}
-
-	info->id=process;
-
-	bufferSize = G_BUFFER_SIZE;
-	if(!GetModuleBaseName(hHandle,NULL,g_buffer,bufferSize)) 
-	{
-		LOG_LASTERROR(L"GetModuleBaseName failed");
-		iReturnCode = DIAGLIB_ERR_INTERNAL;
-	}
-	else
-	{
-		info->Name=g_buffer;
-	}
-
-	bufferSize = G_BUFFER_SIZE;
-	if(!GetModuleFileNameEx(hHandle,NULL,g_buffer,bufferSize)) 
-	{
-		LOG_LASTERROR(L"GetModuleFileNameEx failed");
-		iReturnCode = DIAGLIB_ERR_INTERNAL;
-	}
-	else
-	{
-		info->Path=g_buffer;
-	}
-
-	bufferSize = G_BUFFER_SIZE;
-	if(!GetProcessImageFileName(hHandle,g_buffer,bufferSize))
-	{
-		LOG_LASTERROR(L"QueryFullProcessImageName failed");
-		iReturnCode = DIAGLIB_ERR_INTERNAL;
-	}
-	else
-	{
-		info->FullPath=g_buffer;
-	}
-
-	HMODULE modulesFound[1024];
-	DWORD spaceActuallyRequired;
-
-	if(!EnumProcessModules(hHandle,modulesFound,1024,&spaceActuallyRequired))
-	{
-		LOG_LASTERROR(L"EnumProcessModules failed");
-	}
-	else
-	{
-		info->modulesLoaded.clear();
-		for(unsigned int i=0;i<(spaceActuallyRequired/sizeof(HMODULE));i++)
-		{
-			TCHAR szModName[MAX_PATH];
-
-			if(GetModuleBaseName(hHandle,modulesFound[i],szModName,sizeof(szModName)/sizeof(TCHAR)))
-				info->modulesLoaded.insert(szModName);
-            //if(GetModuleFileNameEx(hHandle,modulesFound[i],szModName,sizeof(szModName)/sizeof(TCHAR)))
-				//modInfo.path=szModName;
-		}
-	}
-
-	if(!CloseHandle( hHandle ))
-	{
-		LOG_LASTERROR(L"CloseHandle failed");
-	}
-
-	LOG(L"DONE\n");
-
-	return iReturnCode;
-} 
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-int processKill(Proc_ID process)
-{
-	int iReturnCode = EDT_OK;
-
-	if(process == 0)
-	{
-		return EDT_ERR_BAD_PARAM;
-	}
-
-	LOG_TIME(L"Ask for killing pid=%ld --> ",process);
-			
-	HANDLE hHandle = NULL;
-	if(NULL == (hHandle = ::OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION,0,process)))
-	{
-		LOG_LASTERROR(L"OpenProcess failed");
-		return EDT_ERR_INTERNAL;
-	}
-	DWORD dwExitCode = 0;
-
-	if(!::TerminateProcess(hHandle,dwExitCode))
-	{
-		LOG_LASTERROR(L"TerminateProcess failed");
-		iReturnCode = DIAGLIB_ERR_PROCESS_KILL_FAILED;
-	} 
-	else
-	{
-		if(!::GetExitCodeProcess(hHandle,&dwExitCode))
-		{
-			LOG_LASTERROR(L"GetExitCodeProcess failed");
-			iReturnCode = EDT_ERR_INTERNAL;
-		}
-		else
-		{
-			LOG(L"FOUND and KILLED (Return code = %ld)\n",dwExitCode);
-		}
-	}
-
-	if(!CloseHandle( hHandle ))
-	{
-		LOG_LASTERROR(L"CloseHandle failed");
-	}
-
-	return iReturnCode;
-} 
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-int processStart(Proc_NAME process, Proc_ID *id, int waitTimeSecs, int *exitCode)
-{
-	int iReturnCode = EDT_OK;
-
-	if(process.empty() || id == NULL)
-	{
-		return EDT_ERR_BAD_PARAM;
-	}
-
-	LOG_TIME(L"Ask for start process named '%ls' --> ",process.c_str());
-
-	STARTUPINFO siStartupInfo;
-    PROCESS_INFORMATION piProcessInfo;
-    ZeroMemory(&siStartupInfo, sizeof(siStartupInfo));
-    ZeroMemory(&piProcessInfo, sizeof(piProcessInfo));
-    siStartupInfo.cb = sizeof(siStartupInfo);
-
-    if (!CreateProcess(NULL,(LPWSTR)process.c_str(),0,0,false,0,NULL,NULL, &siStartupInfo, &piProcessInfo)) 
-	{ 
-		LOG_LASTERROR(L"CreateProcess failed");
-		iReturnCode = DIAGLIB_ERR_PROCESS_START_FAILED;
-	}
-	else
-	{
-		*id=piProcessInfo.dwProcessId;
-		Sleep(100);
-		LOG(L"STARTED with pid=%ld\n",*id);
-		if(waitTimeSecs>0)
-		{
-			iReturnCode=processWait(*id, exitCode, waitTimeSecs);
-		}
-	}
-
-	return iReturnCode;
-} 
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-int processStartAsAdmin(Proc_NAME process, Proc_ID *id, int waitTimeSecs, int *exitCode)
-{
-	int iReturnCode = EDT_OK;
-
-	return RETURN_LOG_ERROR(DIAGLIB_ERR_NOT_AVAILABLE);
-
-	return iReturnCode;
-} 
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-int processWait(Proc_ID process, int *exitCode, int waitTimeSecs)
-{
-	int iReturnCode = EDT_OK;
-
-	if(process == 0)
-	{
-		return EDT_ERR_BAD_PARAM;
-	}
-
-	LOG_TIME(L"Waiting for process pid=%ld --> ",process);
-
-	HANDLE hHandle;
-
-	if(NULL == (hHandle = ::OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION,0,process)))
-	{
-		LOG_LASTERROR(L"OpenProcess failed");
-		return EDT_ERR_INTERNAL;
-	}
-
-	if(EDT_OK == (iReturnCode = processWaitFromHandle(hHandle, exitCode, waitTimeSecs)))
-	{
-		LOG(L"DONE\n");
-	}
-
-	if(!CloseHandle( hHandle ))
-	{
-		LOG_LASTERROR(L"CloseHandle failed");
-	}
-
-	return iReturnCode;
-} */
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////// PRIVATE FUNCTIONS ////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////
-int EDT_process_logList()
+int EDT_process_logList(processPresenceMap *pmapProcessPresence)
 {
 	int iReturnCode = EDT_OK;
 
 	LOG_ENTER();
 
-	//EnablePrivilege(SE_DEBUG_NAME);//fve check if needed
 	HANDLE hndl;
 	if(INVALID_HANDLE_VALUE == ( hndl=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0)))
 	{
@@ -395,14 +58,33 @@ int EDT_process_logList()
 		LOG_EXIT(EDT_ERR_INTERNAL);
 		return EDT_ERR_INTERNAL;
 	}
+
+	if(pmapProcessPresence != NULL)
+	{
+		for(processPresenceMap::iterator i=pmapProcessPresence->begin();i!=pmapProcessPresence->end();i++)
+			i->second = false;
+	}
+
 	do 
 	{
 		if(procEntry.th32ProcessID != 0)
 		{
-			LOG(L"ProcessID = %d\n",procEntry.th32ProcessID);
-			LOG(L"Process name = %s\n",procEntry.szExeFile);
-
-			EDT_LogModules(procEntry.th32ProcessID);
+			if(pmapProcessPresence != NULL)
+			{
+				for(processPresenceMap::iterator i=pmapProcessPresence->begin();i!=pmapProcessPresence->end();i++)
+				{
+					if( _wcsnicmp(i->first,procEntry.szExeFile, wcslen(i->first)) == 0)
+					{
+						i->second = true;
+					}
+				}
+			}
+			else
+			{
+				LOG(L"ProcessID = %d\n",procEntry.th32ProcessID);
+				LOG(L"Process name = %s\n",procEntry.szExeFile);
+				EDT_LogModules(procEntry.th32ProcessID);
+			}
 		}
 	} while(Process32Next(hndl,&procEntry));
 
@@ -414,198 +96,22 @@ int EDT_process_logList()
 	LOG_EXIT(iReturnCode);
 	return iReturnCode;
 } 
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-/*int processFillList(Proc_LIST *processList, const wchar_t *processName)
+void EDT_process_logProcessPresenceMap(processPresenceMap *pmapProcessPresence)
 {
-	int iReturnCode = EDT_OK;
-
-	if(processList == NULL)
-	{
-		return EDT_ERR_BAD_PARAM;
-	}
-
-	if(processName)
-	{
-		LOG_TIME(L"Ask for process list (with name = %ls) --> ",processName);
-	}
-	else
-	{
-		LOG_TIME(L"Ask for list of all process --> ");
-	}
-
-	processList->clear();
-
-	EnablePrivilege(SE_DEBUG_NAME);
-	HANDLE hndl;
-	if(INVALID_HANDLE_VALUE == ( hndl=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0)))
-	{
-		LOG_LASTERROR(L"CreateToolhelp32Snapshot failed");
-		return EDT_ERR_INTERNAL;
-	}
-
-	PROCESSENTRY32  procEntry={0};
-	procEntry.dwSize = sizeof( PROCESSENTRY32 );
-
-	//Get progressMax if request
-	int progressMax = 0;
-	if (!Process32First(hndl, &procEntry))
-	{
-		LOG_LASTERROR(L"Process32First failed");
-		if(!CloseHandle( hndl ))
+	for(processPresenceMap::iterator i=pmapProcessPresence->begin();i!=pmapProcessPresence->end();i++)
+	{		
+		if(i->second == true)
 		{
-			LOG_LASTERROR(L"CloseHandle failed");
-		}
-		return EDT_ERR_INTERNAL;
-	}
-	do
-	{
-		progressMax++;
-	} while (Process32Next(hndl, &procEntry));
-
-	if(!Process32First(hndl,&procEntry))
-	{
-		LOG_LASTERROR(L"Process32First failed");
-		if(!CloseHandle( hndl ))
-		{
-			LOG_LASTERROR(L"CloseHandle failed");
-		}
-		return EDT_ERR_INTERNAL;
-	}
-
-	progressInit(progressMax);
-
-	do 
-	{
-		if(procEntry.th32ProcessID != 0)
-		{
-			if(processName == NULL)
-			{
-				processList->push_back(procEntry.th32ProcessID);
-			}
-			else if(0 == _wcsicmp(procEntry.szExeFile,processName))	
-			{
-				processList->push_back(procEntry.th32ProcessID);
-			}
-		}
-
-		progressIncrement();
-
-	} while(Process32Next(hndl,&procEntry));
-
-	progressRelease();
-
-	if(!CloseHandle( hndl ))
-	{
-		LOG_LASTERROR(L"CloseHandle failed");
-	}
-
-	if(processList->size() == 0)
-	{
-		LOG(L"NO PROCESS FOUND\n");
-	}
-	else
-	{
-		LOG(L"pid=");
-		for (unsigned long i=0; i < processList->size() ; i++)
-		{
-			LOG(L"%ld,",processList->at(i));
-		}
-		LOG(L"DONE\n");
-	}
-
-	return iReturnCode;
-} 
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-int processWaitFromHandle(HANDLE hHandle, int *exitCode, int waitTimeSecs)
-{
-	int iReturnCode = EDT_OK;
-
-	if(hHandle == 0)
-	{
-		return EDT_ERR_BAD_PARAM;
-	}
-
-    DWORD dwExitCode = WaitForSingleObject(hHandle, waitTimeSecs*1000);
-	if (dwExitCode == WAIT_TIMEOUT) 
-	{
-		LOG_LASTERROR(L"TIMEOUT");
-		iReturnCode = DIAGLIB_ERR_PROCESS_WAIT_TIMEOUT;
-	}
-	else if (dwExitCode != WAIT_OBJECT_0)
-	{
-		LOG(L"WaitForSingleObject failed\n");
-		iReturnCode = DIAGLIB_ERR_INTERNAL;
-	}
-	if(iReturnCode == EDT_OK)
-	{
-		if(!GetExitCodeProcess(hHandle,&dwExitCode))
-		{
-			LOG_LASTERROR(L"GetExitCodeProcess failed");
-		}
-		else if(dwExitCode==3010)
-		{
-			// Process ended with non-zero exit code
-			LOG(L"WARNING: A reboot is needed\n");
-			iReturnCode=DIAGLIB_REBOOT_NEEDED;
+			LOG(L"%s found\n",i->first);
 		}
 		else
 		{
-			LOG(L"QUIT NORMALLY\n");
+			LOG(L"--%s-- not found\n",i->first);
 		}
 	}
-
-	if(exitCode) *exitCode=dwExitCode;
-
-	return iReturnCode;
-} */
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-/*bool EnableTokenPrivilege(HANDLE htok, LPCTSTR szPrivilege, TOKEN_PRIVILEGES *tpOld)
-{
-    TOKEN_PRIVILEGES tp;
-    tp.PrivilegeCount = 1;
-    tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-
-    if (LookupPrivilegeValue(0, szPrivilege, &tp.Privileges[0].Luid))
-    {
-        DWORD cbOld = sizeof (*tpOld);
-
-        if (AdjustTokenPrivileges(htok, FALSE, &tp, cbOld, tpOld, &cbOld))
-        {
-            return (ERROR_NOT_ALL_ASSIGNED != GetLastError());
-        }
-        else
-        {
-            return false;
-        }
-    }
-    else
-    {
-        return false;
-    }
 }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
-bool EnablePrivilege(LPCTSTR szPrivilege)
-{
-    BOOL bReturn = FALSE;
-    HANDLE hToken;
-    TOKEN_PRIVILEGES tpOld;
-
-    if (!OpenProcessToken(GetCurrentProcess(), 
-         TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES, &hToken))
-    {
-        return false;
-    }
-
-    bReturn = (EnableTokenPrivilege(hToken, szPrivilege, &tpOld));
-    CloseHandle(hToken);
-
-	return (bReturn?true:false);
-}*/
-
+///////////////////////////// PRIVATE FUNCTIONS ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
 int EDT_LogModules(DWORD dwPID)
 {
@@ -615,7 +121,6 @@ int EDT_LogModules(DWORD dwPID)
     HANDLE hModuleSnap = INVALID_HANDLE_VALUE;
     MODULEENTRY32 me32;
 
-    //EnablePrivilege(SE_DEBUG_NAME);
 	if(INVALID_HANDLE_VALUE == ( hModuleSnap=CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, dwPID)))
 	{
 		LOG_LASTERROR(L"CreateToolhelp32Snapshot failed");
@@ -648,114 +153,3 @@ int EDT_LogModules(DWORD dwPID)
 	LOG_EXIT(iReturnCode);
     return iReturnCode;
 }
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////
-bool AdjustDacl(HANDLE h, DWORD dwDesiredAccess)
-{
-    SID world = { SID_REVISION, 1, SECURITY_WORLD_SID_AUTHORITY, 0 };
-
-    EXPLICIT_ACCESS ea =
-    {
-        0,
-            SET_ACCESS,
-            NO_INHERITANCE,
-        {
-            0, NO_MULTIPLE_TRUSTEE,
-                TRUSTEE_IS_SID,
-                TRUSTEE_IS_USER,
-                0
-        }
-    };
-
-    ACL* pdacl = 0;
-    DWORD err = SetEntriesInAcl(1, &ea, 0, &pdacl);
-
-    ea.grfAccessPermissions = dwDesiredAccess;
-    ea.Trustee.ptstrName = (LPTSTR)(&world);
-
-    if (err == ERROR_SUCCESS)
-    {
-        err = SetSecurityInfo(h, SE_KERNEL_OBJECT, 
-              DACL_SECURITY_INFORMATION, 0, 0, pdacl, 0);
-        LocalFree(pdacl);
-
-        return (err == ERROR_SUCCESS);
-    }
-    else
-    {
-        return false;
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-HANDLE AdvanceOpenProcess(DWORD pid, DWORD dwAccessRights)
-{
-    HANDLE hProcess = OpenProcess(dwAccessRights, FALSE, pid);
-
-    if (hProcess == NULL)
-    {
-        HANDLE hpWriteDAC = OpenProcess(WRITE_DAC, FALSE, pid);
-
-        if (hpWriteDAC == NULL)
-        {
-            HANDLE htok;
-            TOKEN_PRIVILEGES tpOld;
-
-            if (!OpenProcessToken(GetCurrentProcess(), 
-                 TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES, &htok))
-            {
-                return false;
-            }
-
-            if (EnableTokenPrivilege(htok, SE_TAKE_OWNERSHIP_NAME, &tpOld))
-            {
-                HANDLE hpWriteOwner = OpenProcess(WRITE_OWNER, FALSE, pid);
-
-                if (hpWriteOwner != NULL)
-                {
-                    BYTE buf[512];
-                    DWORD cb = sizeof buf;
-
-                    if (GetTokenInformation(htok, TokenUser, buf, cb, &cb))
-                    {
-                        DWORD err = SetSecurityInfo(hpWriteOwner, SE_KERNEL_OBJECT, 
-                                    OWNER_SECURITY_INFORMATION, 
-                                    ((TOKEN_USER *)(buf))->User.Sid, 0, 0, 0);
-                        
-                        if (err == ERROR_SUCCESS)
-                        {
-                            if (!DuplicateHandle(GetCurrentProcess(), hpWriteOwner, 
-                                 GetCurrentProcess(), &hpWriteDAC, 
-                                 WRITE_DAC, FALSE, 0))
-                            {
-                                hpWriteDAC = NULL;
-                            }
-                        }
-                    }
-
-                    CloseHandle(hpWriteOwner);
-                }
-
-                AdjustTokenPrivileges(htok, FALSE, &tpOld, 0, 0, 0);
-            }
-
-            CloseHandle(htok);
-        }
-
-        if (hpWriteDAC)
-        {
-            AdjustDacl(hpWriteDAC, dwAccessRights);
-
-            if (!DuplicateHandle(GetCurrentProcess(), hpWriteDAC, 
-                GetCurrentProcess(), &hProcess, dwAccessRights, FALSE, 0))
-            {
-                hProcess = NULL;
-            }
-
-            CloseHandle(hpWriteDAC);
-        }
-    }
-
-    return (hProcess);
-}*/
- 
