@@ -24,6 +24,7 @@
 #include "hardware.h"
 #include "calaisregister.h"
 #include "eidmw.h"
+#include "thirdParty.h"
 #include "software.h"
 #include "devices.h"
 #include "system.h"
@@ -48,6 +49,7 @@ DWORD WINAPI EDTThreadFunction( LPVOID lpParam )
 	EDT_StartHWLog();
 	EDT_StartSystemLog();
 	EDT_StartEidmwLog();
+	EDT_StartThirdPartyLog();
 	EDT_StartCalaisRegisterLog();
 	EDT_StartSoftwareLog();
 	EDT_StartDevicesLog();
