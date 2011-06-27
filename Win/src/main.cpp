@@ -25,14 +25,19 @@
 #include <Winuser.h>
 
 #define MAX_LOADSTRING 100
-#define COPY_BUTTON_HEIGHT 20
+#define COPY_BUTTON_HEIGHT 30
 
 // Global Variables:
-HINSTANCE hInst;								// current instance
-TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
-TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
+HINSTANCE hInst;											// current instance
+TCHAR szTitle[MAX_LOADSTRING];				// The title bar text
+TCHAR szWindowClass[MAX_LOADSTRING];	// the main window class name
 BOOL bg_AutoExit = FALSE;
+BOOL bg_StartButton = FALSE;
 HWND hg_textWnd = NULL;			//handle to the edit control
+HWND hg_button = NULL;			//handle to the button
+
+#define btnNameLog L"<<< SHOW LOGFILE >>>"
+#define btnNameStart L"<<< START >>>"
 
 // Forward declarations of functions included in this code module:
 DWORD WINAPI		EDTThreadFunction( LPVOID lpParam );
@@ -41,6 +46,7 @@ BOOL				InitInstance(HINSTANCE hInstance,int nCmdShow);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 void				ParseCommandChar(TCHAR cmdChar);
+void				StartEDTThread (void);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -84,19 +90,33 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_EDTNG));
 
-	//Start EDT thread
-	DWORD   dwThreadId;
-	HANDLE  hThreadHandle; 
+	if(bg_StartButton == FALSE)
+	{
+		StartEDTThread();
+	}
+	else
+	{
+		SendMessage(hg_button, WM_SETTEXT,0, (LPARAM)btnNameStart); // for Win32 windows
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Gelieve te verifiëren of er :\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - een kaartlezer is aangesloten \r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - een beidkaart in de kaartlezer aanwezig is\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Druk op de startknop hier beneden om te starten\r\n\r\n\r\n");
 
-	// Create EDT thread
-	hThreadHandle = CreateThread( 
-		NULL,                   // default security attributes
-		0,                      // use default stack size  
-		EDTThreadFunction,		// thread function name
-		hg_textWnd,				// argument to thread function 
-		0,                      // use default creation flags 
-		&dwThreadId);			// returns the thread identifier 
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Voulez vous verifier si :\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - un lecteur de cartes est connecté \r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - une carte beid est inséré dans le lecteur de cartes\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Appuyez sur la button \"start\" ci-dessous pour démarrer l'enregistrement\r\n\r\n\r\n");
 
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Bitte überprüfen Sie, ob :\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - ein Kartenleser angeschlossen ist\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - ein Beid-Karte in den Kartenleser eingeschoben ist\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Drücken Sie die Schaltfläche \"Start\" unter um die Aufzeichnung zu starten\r\n\r\n\r\n");
+
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Please verify if :\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - a cardreader is connected \r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - a beidcard is inserted into the cardreader\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Press the startbutton below to start logging\r\n");
+	}
 
 
 	// Main message loop:
@@ -161,7 +181,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd;
-   HWND hCopyButton;
 
    hInst = hInstance; // Store instance handle in our global variable
    WCHAR EdtTitle[100];
@@ -175,9 +194,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
 
-   hCopyButton = CreateWindow(L"BUTTON", L"<<< SHOW LOGFILE >>>", WS_CHILD | BS_PUSHBUTTON | BS_TEXT | BS_VCENTER,
+   hg_button = CreateWindow(L"BUTTON", btnNameLog, WS_CHILD | BS_PUSHBUTTON | BS_TEXT | BS_VCENTER,
    CW_USEDEFAULT, 0, 200, COPY_BUTTON_HEIGHT, hWnd, (HMENU)ID_BUTTON, hInstance, NULL);
-   if (!(hCopyButton))
+   if (!(hg_button))
    {
       return FALSE;
    }
@@ -191,7 +210,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    ShowWindow(hWnd, nCmdShow);
    ShowWindow(hg_textWnd, SW_SHOWNORMAL);
-   ShowWindow(hCopyButton, SW_SHOWNORMAL);
+   ShowWindow(hg_button, SW_SHOWNORMAL);
    UpdateWindow(hWnd);
    return TRUE;
 }
@@ -275,7 +294,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_BUTTON:
 			if( wmEvent== BN_CLICKED)
 			{
-				logShowLogFile();
+				if(bg_StartButton == TRUE)
+				{
+					StartEDTThread();
+					bg_StartButton = FALSE;
+					SendMessage(hg_button, WM_SETTEXT,0, (LPARAM)btnNameLog);
+					SendMessage(hg_textWnd, WM_SETTEXT,0,  (LPARAM)L"");
+				}else
+				{
+					logShowLogFile();
+				}
 			}
 			break;
 		case IDM_ABOUT:
@@ -298,7 +326,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
-		// TODO: Add any drawing code here...
+		// Add any drawing code here...
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
@@ -339,5 +367,25 @@ void ParseCommandChar(TCHAR cmdChar)
 	case L'a':
 		bg_AutoExit = TRUE;
 		break;
+	case L'S':
+	case L's':
+		bg_StartButton = TRUE;
+		break;
 	};
+}
+
+void StartEDTThread (void)
+{
+	//Start EDT thread
+	DWORD   dwThreadId;
+	HANDLE  hThreadHandle; 
+
+	// Create EDT thread
+	hThreadHandle = CreateThread( 
+		NULL,                   // default security attributes
+		0,                      // use default stack size  
+		EDTThreadFunction,		// thread function name
+		hg_textWnd,				// argument to thread function 
+		0,                      // use default creation flags 
+		&dwThreadId);			// returns the thread identifier 
 }
