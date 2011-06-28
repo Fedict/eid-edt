@@ -98,24 +98,24 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	{
 		SendMessage(hg_button, WM_SETTEXT,0, (LPARAM)btnNameStart); // for Win32 windows
 		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Gelieve te verifiëren of er :\r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - een kaartlezer is aangesloten \r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - een beidkaart in de kaartlezer aanwezig is\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - een kaartlezer is aangesloten;\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - een eID-kaart in de kaartlezer aanwezig is.\r\n");
 		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Druk op de startknop hier beneden om te starten\r\n\r\n\r\n");
 
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Voulez vous verifier si :\r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - un lecteur de cartes est connecté \r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - une carte beid est inséré dans le lecteur de cartes\r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Appuyez sur la button \"start\" ci-dessous pour démarrer l'enregistrement\r\n\r\n\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Veuillez vérifier si :\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - un lecteur de cartes est connecté ;\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - une carte eID est insérée dans le lecteur de cartes.\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Appuyez sur le bouton « Start » ci-dessous afin de lancer l'enregistrement.\r\n\r\n\r\n");
 
 		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Bitte überprüfen Sie, ob :\r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - ein Kartenleser angeschlossen ist\r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - ein Beid-Karte in den Kartenleser eingeschoben ist\r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Drücken Sie die Schaltfläche \"Start\" unter um die Aufzeichnung zu starten\r\n\r\n\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - ein Kartenleser angeschlossen ist;\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - eine eID-Karte in den Kartenleser eingeschoben ist.\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Drücken Sie die Schaltfläche \"Start\" unten um die Aufzeichnung zu starten.\r\n\r\n\r\n");
 
 		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Please verify if :\r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - a cardreader is connected \r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - a beidcard is inserted into the cardreader\r\n");
-		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Press the startbutton below to start logging\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - a cardreader is connected;\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"   - an eID card is inserted into the card reader.\r\n");
+		SendMessage(hg_textWnd, EM_REPLACESEL,0,  (LPARAM)L"Press the ‘Start’ button below to start the logging.\r\n");
 	}
 
 
