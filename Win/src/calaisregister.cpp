@@ -1,7 +1,7 @@
 /* ****************************************************************************
 
  * EDT Project.
- * Copyright (C) 2010-2011 FedICT.
+ * Copyright (C) 2010-2012 FedICT.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version
@@ -33,6 +33,12 @@ int EDT_StartCalaisRegisterLog()
 
 	int iReturnCode = EDT_OK;
 	int iFunctionCode = EDT_OK;
+
+	iFunctionCode = EDT_UtilReg_LogKeyTree(HKEY_LOCAL_MACHINE,L"SOFTWARE\\Microsoft\\Cryptography\\Calais\\SmartCards",EDTREGFLAG_NONE);
+	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
+		iReturnCode = iFunctionCode;
+
+	LOG(EDT_HALF_LINE_BREAK);
 
 	iFunctionCode = EDT_UtilReg_LogKeyTree(HKEY_LOCAL_MACHINE,L"SOFTWARE\\Microsoft\\Cryptography\\Calais\\Readers",EDTREGFLAG_NONE);
 	if( (iReturnCode == EDT_OK) && (iFunctionCode!=EDT_OK) )
