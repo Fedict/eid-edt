@@ -1,7 +1,7 @@
 /* ****************************************************************************
 
 * EDT Project.
-* Copyright (C) 2010-2011 FedICT.
+* Copyright (C) 2010-2012 FedICT.
 *
 * This is free software; you can redistribute it and/or modify it
 * under the terms of the GNU Lesser General Public License version
@@ -787,16 +787,30 @@ void EDT_UtilReg_LogValueData(const wchar_t* value, BYTE* data,DWORD dwDataLen, 
 	case REG_EXPAND_SZ:
 		data[dwDataLen]='\0';
 		data[dwDataLen+1]='\0';
+		LOG(L"(REG_EXPAND_SZ) %s: %ls\n",value,data);
+		break;
+	case REG_BINARY:
+		LOG(L"(REGBINARY) %s: ",value);
+		LOG_BYTE_ARRAY(data, dwDataLen);
+		break;
+	case REG_DWORD_BIG_ENDIAN:
+		LOG(L"(REG_DWORD_BIG_ENDIAN) %s: %ld\n",value,*(DWORD*)data);
+		break;
+	case REG_DWORD:
+	//case REG_DWORD_LITTLE_ENDIAN:
+		LOG(L"(REGWORD) %s: %ld\n",value,*(DWORD*)data);
+		break;
+	case REG_MULTI_SZ:
+		data[dwDataLen]='\0';
+		data[dwDataLen+1]='\0';
 		data[dwDataLen+2]='\0';
 		data[dwDataLen+3]='\0';
 		while( *multiStringPart != '\0')
 		{					
-			LOG(L"(REG_EXPAND_SZ) %s: %ls\n",value,multiStringPart);
+			LOG(L"(REG_MULTI_SZ) %s: %ls\n",value,multiStringPart);
 			multiStringPart += (wcslen(multiStringPart)+1);
 		}
 		break;
-	case REG_DWORD:
-		LOG(L"(REGWORD) %s: %ld\n",value,*(DWORD*)data);
 		break;
 	default:
 		LOG(L"(REGUNMANAGED) %s: %ls\n",value,data);
