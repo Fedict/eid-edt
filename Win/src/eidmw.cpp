@@ -179,6 +179,11 @@ int EDT_EIDMW_LogEidmwFiles(void)
 		LOG_ERROR(L"System folder not found");
 		iReturnCode = EDT_ERR_INTERNAL;
 	}
+	if(!SHGetSpecialFolderPath(NULL,theApplicationsFolder,CSIDL_PROGRAM_FILES,FALSE))
+	{
+		LOG_ERROR(L"Applications folder not found");
+		iReturnCode = EDT_ERR_INTERNAL;
+	}
 	if(iReturnCode == EDT_OK)
 	{
 		LOG(L"Eidmw Files\n");
@@ -235,7 +240,7 @@ int EDT_EIDMW_LogEidmwFiles(void)
 		EDT_EIDMW_FindFile(L"beidlibJava_Wrapper.dll", theSystemFolder );
 		LogDecIndent();
 
-		LOG(L"Eidmw 3.5 Files\n");
+		LOG(L"Eidmw 3.5/4.0 Files\n");
 		LogIncIndent();
 		EDT_EIDMW_FindFile(L"beid35applayer.dll", theSystemFolder );
 		EDT_EIDMW_FindFile(L"beid35cardlayer.dll", theSystemFolder );
@@ -243,6 +248,17 @@ int EDT_EIDMW_LogEidmwFiles(void)
 		EDT_EIDMW_FindFile(L"beid35DlgsWin32.dll", theSystemFolder );
 		EDT_EIDMW_FindFile(L"siscardplugins\\siscardplugin1_BE_EID_35__ACS_ACR38U__.dll", theSystemFolder );
 		EDT_EIDMW_FindFile(L"siscardplugins\\siscardplugin1_BE_EID_35__ACS ACR38U__.dll", theSystemFolder );
+		LogDecIndent();
+
+		LOG(L"Eidmw 4.0 Files\n");
+		LogIncIndent();
+		EDT_EIDMW_FindFile(L"Belgium Identity Card\\EidViewer\\eID Viewer.exe", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"Belgium Identity Card\\beidoffice2010_XAdES_XL.exe", theApplicationsFolder );
+		EDT_EIDMW_FindFile(L"Belgium Identity Card\\beidoutlooksnc.exe", theApplicationsFolder );
+
+		EDT_EIDMW_FindFile(L"beid_ff_pkcs11.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"beidpkcs11.dll", theSystemFolder );
+		EDT_EIDMW_FindFile(L"\\beidpp\\xireid.dll", theSystemFolder );
 		LogDecIndent();
 
 		LOG(L"Eidmw minidriver Files\n");
