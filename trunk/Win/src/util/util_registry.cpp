@@ -820,9 +820,10 @@ void EDT_UtilReg_LogValueData(const wchar_t* value, BYTE* data,DWORD dwDataLen, 
 
 BOOL EDT_UtilReg_IsEidmwKeyName(wchar_t * subKeyName)
 {
+	BOOL retVal = FALSE;
 	int counter = 0;
-	const int MW_DefLen = 12;
-	const MW_DEFINITION MW_Def[12] =
+	const int MW_DefLen = 25;
+	const MW_DEFINITION MW_Def[25] =
 	{
 		{L"2.3",					L"{44CFED0B-BF92-455B-94D3-FA967A81712E}"},
 		{L"2.4",					L"{BA42ACEA-3782-4CAD-AA10-EBC2FA14BB7E}"},
@@ -833,8 +834,21 @@ BOOL EDT_UtilReg_IsEidmwKeyName(wchar_t * subKeyName)
 		{L"3.5 Pro \"IS version\"",	L"{4C2FBD23-962C-450A-A578-7556BC79B8B2}"},
 		{L"3.5",					L"{824563DE-75AD-4166-9DC0-B6482F2DED5A}"},	
 		{L"3.5 Pro",				L"{FBB5D096-1158-4e5e-8EA3-C73B3F30780A}"},
-		{L"3.5.x",					L"{824563DE-75AD-4166-9DC0-B6482F20"},
 		{L"3.5.x Pro",				L"{FBB5D096-1158-4e5e-8EA3-C73B3F30"},
+		{L"3.5.x / 4.0.x",					L"{824563DE-75AD-4166-9DC0-B6482F20"},
+		{L"3.5.3.6193",			L"{824563DE-75AD-4166-9DC0-B6482F206193"},
+		{L"3.5.3",					L"{824563DE-75AD-4166-9DC0-B6482F206295"},
+		{L"3.5.4",					L"{824563DE-75AD-4166-9DC0-B6482F206535"},
+		{L"3.5.5",					L"{824563DE-75AD-4166-9DC0-B6482F206870"},
+		{L"3.5.6.6954",			L"{824563DE-75AD-4166-9DC0-B6482F206954"},
+		{L"3.5.6.6958",			L"{824563DE-75AD-4166-9DC0-B6482F206958"},
+		{L"3.5.6",					L"{824563DE-75AD-4166-9DC0-B6482F206968"},
+		{L"3.5.6.7045",			L"{824563DE-75AD-4166-9DC0-B6482F207045"},
+		{L"4.0.0",					L"{824563DE-75AD-4166-9DC0-B6482F207094"},
+		{L"4.0.2",					L"{824563DE-75AD-4166-9DC0-B6482F207188"},
+		{L"4.0.2",					L"{824563DE-75AD-4166-9DC0-B6482F207195"},
+		{L"4.0.3",					L"{824563DE-75AD-4166-9DC0-B6482F207196"},
+		{L"4.0.4",					L"{824563DE-75AD-4166-9DC0-B6482F207251"},
 		{L"minidriver",				L"{842C2A79-289B-4cfa-9158-349B73F"}
 	};
 	for (;counter < MW_DefLen ; counter++)
@@ -842,9 +856,9 @@ BOOL EDT_UtilReg_IsEidmwKeyName(wchar_t * subKeyName)
 		if (wcsncmp(subKeyName, MW_Def[counter].Guid, wcslen(MW_Def[counter].Guid)) == 0 )
 		{
 			LOG(L"Eidmw version %s found\n",MW_Def[counter].Label);
-			return TRUE;
+			retVal = TRUE;
 		}
 	}
-	return FALSE;
+	return retVal;
 
 }
