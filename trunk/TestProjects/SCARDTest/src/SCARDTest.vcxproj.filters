@@ -15,21 +15,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SCARDTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="sct_general.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sct_getcarddata.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sct_log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sct_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="targetver.h">
+    <ClInclude Include="sct_general.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sct_general.h">
+    <ClInclude Include="sct_log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sct_main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
