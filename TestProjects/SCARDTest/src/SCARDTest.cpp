@@ -1,10 +1,29 @@
-// SCARDTest.cpp : Defines the entry point for the console application.
-//
+/* ****************************************************************************
 
-#include "stdafx.h"
-#include "winscard.h"
+ * SCTest Project.
+ * Copyright (C) 2013 FedICT.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License version
+ * 3.0 as published by the Free Software Foundation.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, see
+ * http://www.gnu.org/licenses/.
 
-#include "WinBase.h"
+**************************************************************************** */
+
+#include <stdio.h>
+#include <tchar.h>
+#include <winscard.h>
+#include <WinBase.h>
+
+#include "sct_general.h"
 
 #define LogTrace printf
 DWORD BeidSelectApplet(SCARDHANDLE  pCardData);
@@ -16,9 +35,7 @@ void testGetATR_2(SCARDHANDLE* phCard);
 void testGetATR_3(SCARDCONTEXT* phCard, WCHAR* readerName);
 void testIDAIDSelect(SCARDHANDLE* phCard);
 void testBELPICAIDSelect(SCARDHANDLE* phCard);
-DWORD SendCommand(SCARDHANDLE hCard, unsigned char* orgCmd, unsigned int orgCmdLen,
-	bool lcNeeded, unsigned char lc, unsigned char* Data,
-	bool leNeeded, unsigned char le, unsigned char *recvbuf, unsigned long *recvlen);
+
 DWORD GetCardData(SCARDHANDLE hCard);
 
 void BusySleep(int msecs)
