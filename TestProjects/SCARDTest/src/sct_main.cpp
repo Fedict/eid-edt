@@ -18,11 +18,6 @@
 
 **************************************************************************** */
 
-#include <stdio.h>
-#include <tchar.h>
-#include <winscard.h>
-#include <WinBase.h>
-
 #include "sct_general.h"
 
 DWORD BeidSelectApplet(SCARDHANDLE  pCardData);
@@ -55,12 +50,12 @@ void BusySleep(int msecs)
 	return;
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, CHAR* argv[])
 {
 	//WCHAR*						pmszReaders = NULL;
-	WCHAR*							pBmszReaders;
-	WCHAR*							pfirstReader;
-	WCHAR*							pnexttReader;
+	CHAR*							pBmszReaders;
+	CHAR*							pfirstReader;
+	CHAR*							pnexttReader;
 	LONG							retval = 0;
 	SCARDCONTEXT  		hContext;
 	DWORD							cchReaders = SCARD_AUTOALLOCATE;
@@ -72,10 +67,13 @@ int _tmain(int argc, _TCHAR* argv[])
 	DWORD							cByte = SCARD_AUTOALLOCATE;
 //	DWORD							i;
 	DWORD							iSleep = 250;
+
+	LogInitialize();
+
 	retval = SCardEstablishContext ( SCARD_SCOPE_USER,NULL,NULL,&hContext);
 	if(retval == SCARD_S_SUCCESS)
 	{
-		retval = SCardListReaders(hContext,NULL,(LPWSTR)&pBmszReaders,&cchReaders);
+		retval = SCardListReaders(hContext,NULL,(LPSTR)&pBmszReaders,&cchReaders);
 		if(retval == SCARD_S_SUCCESS)
 		{
 			pfirstReader = pBmszReaders;
@@ -104,20 +102,20 @@ wprintf(L"YAY, released access, waiting for keystroke\n");
 					//BeidSelectApplet(hCard);
 					GetCardData(hCard);
 					//testMacNewcardIssue(&hCard);
-					testCardConfusedIssue(&hCard);
+					//testCardConfusedIssue(&hCard);
 					//testIDAIDSelect(&hCard);s
 					//testBELPICAIDSelect(&hCard);
 					//testGetATR(&hCard);
 					//testGetATR_2(&hCard);
-					testFullPathSelect(&hCard);
+					//testFullPathSelect(&hCard);
 					SCardDisconnect(hCard,SCARD_RESET_CARD);
 				}
 				else
 				{
-					wprintf(L"SCardConnect to %s failed\n",pfirstReader);
+					printf("SCardConnect to %s failed\n",pfirstReader);
 				}
 
-				dwTotalLen += wcslen(pnexttReader)+1;
+				dwTotalLen += strlen(pnexttReader)+1;
 				if(dwTotalLen < cchReaders)
 					pnexttReader = pfirstReader + dwTotalLen;		
 			}
@@ -142,6 +140,8 @@ wprintf(L"YAY, released access, waiting for keystroke\n");
 	SCardReleaseContext(hContext);
 
 	printf("retval = %d\n",retval);
+
+	LogFinalize();
 	getchar();
 	return 0;
 }
@@ -274,59 +274,6 @@ void testCardConfusedIssue(SCARDHANDLE* phCard)
 	retval = SCardTransmit(*phCard,SCARD_PCI_T0,pbSendBuffer,cbSendLength,NULL, pbRecvBuffer,&cbRecvLength);
 }
 
-DWORD GetCardData(SCARDHANDLE hCard)
-{
-	DWORD             dwReturn = 0;
-	unsigned char     orgCmd[128];
-   unsigned int      orgCmdLen = 0;
-   	unsigned char     recvbuf[256];
-	unsigned long     recvlen = sizeof(recvbuf);
-   BYTE SW1;
-   BYTE SW2;
-
-
-   orgCmd [0] = 0x80;
-   orgCmd [1] = 0xE4;
-   orgCmd [2] = 0x00;
-   orgCmd [3] = 0x00;
-   orgCmdLen = 4;
-
-   dwReturn = SendCommand(hCard,orgCmd,orgCmdLen,FALSE, 0, NULL, TRUE, 0xFF , recvbuf, &recvlen);
-
-   if(dwReturn == SCARD_S_SUCCESS ) 
-   {
-	   if (recvlen >= 2)
-	   {
-		   SW1 = recvbuf[recvlen-2];
-		   SW2 = recvbuf[recvlen-1];
-
-		   if (SW1 == 0x6c)
-		   {
-			   dwReturn = SendCommand(hCard,orgCmd,orgCmdLen,FALSE, 0, NULL, TRUE, SW2, recvbuf, &recvlen);
-			   if (recvlen >= 2)
-			   {
-				   SW1 = recvbuf[recvlen-2];
-				   SW2 = recvbuf[recvlen-1];
-			   }
-			   else
-			   {
-				   LogTrace("GetCardData recvlen = %d\n", recvlen);
-			   }
-		   }
-		   if ( !((SW1 == 0x90) && (SW2 == 0x00)) )
-		   {
-			   LogTrace("GetCardData returned: SW1 SW2 = [0x%02X][0x%02X]\n", SW1, SW2);
-		   }
-	   }
-	   else
-	   {
-			LogTrace("GetCardData recvlen = %d\n", recvlen);
-	   }
-   }
-   return dwReturn;
-}
-
-
 DWORD BeidSelectApplet(SCARDHANDLE  hCard)
 {
    DWORD             dwReturn = 0;
@@ -442,7 +389,7 @@ void testGetATR(SCARDHANDLE* phCard)
 	printf ("trying to get the card's ATR by calling SCardGetAttrib\n");
 	printf ("returned: ATR length = %d retval: 0x%08x\n",dwLen, retval);
 	printf ("ATR = ");
-	for(int i = 0; i < dwLen; i++)
+	for(DWORD i = 0; i < dwLen; i++)
 	{
 		printf(" 0x%02x",pbAtr[i]);
 	}
@@ -452,7 +399,7 @@ void testGetATR(SCARDHANDLE* phCard)
 
 void testGetATR_2(SCARDHANDLE* phCard)
 {
-	WCHAR readerName[256];
+	CHAR readerName[256];
 	DWORD readerNameLen = 256;
 	BYTE  pbAtr[32];
 	DWORD dwLen = 32;
@@ -466,7 +413,7 @@ void testGetATR_2(SCARDHANDLE* phCard)
 	printf ("trying to get the card's ATR by calling SCardStatus\n");
 	printf ("returned: ATR length = %d retval: 0x%08x\n",dwLen, retval);
 	printf ("ATR = ");
-	for(int i = 0; i < dwLen; i++)
+	for(DWORD i = 0; i < dwLen; i++)
 	{
 		printf(" 0x%02x",pbAtr[i]);
 	}
@@ -474,12 +421,12 @@ void testGetATR_2(SCARDHANDLE* phCard)
 
 }
 
-void testGetATR_3(SCARDCONTEXT* phContext, WCHAR* readerName)
+void testGetATR_3(SCARDCONTEXT* phContext, CHAR* readerName)
 {
 	DWORD retval;
 	ULONG ulTimeout = INFINITE;
 	ULONG ulReaderCount = 1;
-	SCARD_READERSTATEW txreaderStates[1];
+	SCARD_READERSTATE txreaderStates[1];
 
 	memset(txreaderStates,0, sizeof(txreaderStates));
 	txreaderStates[0].szReader = readerName;
@@ -493,7 +440,7 @@ void testGetATR_3(SCARDCONTEXT* phContext, WCHAR* readerName)
 	printf ("trying to get the card's ATR by calling SCardGetStatusChange\n");
 	printf ("returned: ATR length = %d retval: 0x%08x\n",txreaderStates[0].cbAtr, retval);
 	printf ("ATR = ");
-	for(int i = 0; i < txreaderStates[0].cbAtr ; i++)
+	for(DWORD i = 0; i < txreaderStates[0].cbAtr ; i++)
 	{
 		printf(" 0x%02x",txreaderStates[0].rgbAtr[i]);
 	}
