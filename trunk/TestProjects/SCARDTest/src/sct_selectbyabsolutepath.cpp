@@ -19,9 +19,9 @@
 **************************************************************************** */
 
 #include "sct_general.h"
+#include "sct_selectbyabsolutepath.h"
 
 //function prototypes
-DWORD SelectAbsPath(SCARDHANDLE hCard, BYTE *absPath, BYTE absPathLen);
 
 //functions
 DWORD SelectByAbsPath(SCARDHANDLE hCard)
@@ -173,7 +173,7 @@ DWORD SelectAbsPath(SCARDHANDLE hCard, BYTE *absPath, BYTE absPathLen)
 
 	if(dwReturn == SCARD_S_SUCCESS ) 
 	{
-		HandleResponse(hCard,orgCmd,orgCmdLen,FALSE, 0, NULL, FALSE, 0 , recvbuf, &recvlen, recvbuflen, "SelectAID");
+		HandleResponse(hCard,orgCmd,orgCmdLen,FALSE, 0, NULL, FALSE, 0 , recvbuf, &recvlen, recvbuflen, "SelectAbsPath");
 	}
 	return dwReturn;
 }

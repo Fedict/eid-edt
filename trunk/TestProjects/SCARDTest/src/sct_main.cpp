@@ -97,6 +97,7 @@ wprintf(L"YAY, released access, waiting for keystroke\n");
 					SelectByAID(hCard);
 					SelectByAbsPath(hCard);
 					SelectByFileId(hCard);
+					ReadBinaries(hCard);
 					//testMacNewcardIssue(&hCard);
 					//testCardConfusedIssue(&hCard);
 					//testGetATR(&hCard);
