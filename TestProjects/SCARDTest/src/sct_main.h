@@ -19,11 +19,13 @@
 **************************************************************************** */
 #pragma once
 
-#include <winscard.h>
 #include <stdio.h>
+#include <winscard.h>
 
 #define SCT_VERSION_MAJOR 0
 #define SCT_VERSION_MINOR 1
 
 DWORD GetCardData(SCARDHANDLE hCard);
 DWORD SelectByAID(SCARDHANDLE hCard);
+DWORD SelectByAbsPath(SCARDHANDLE hCard);
+DWORD SelectByFileId(SCARDHANDLE hCard);
