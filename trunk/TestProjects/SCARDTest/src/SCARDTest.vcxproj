@@ -169,7 +169,9 @@
     <ClCompile Include="sct_getcarddata.cpp" />
     <ClCompile Include="sct_log.cpp" />
     <ClCompile Include="sct_main.cpp" />
-    <ClCompile Include="sct_selectapplet.cpp" />
+    <ClCompile Include="sct_selectbyabsolutepath.cpp" />
+    <ClCompile Include="sct_selectbyAID.cpp" />
+    <ClCompile Include="sct_selectbyfileID.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sct_general.h" />

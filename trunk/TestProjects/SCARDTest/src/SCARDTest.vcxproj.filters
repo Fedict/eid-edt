@@ -27,7 +27,13 @@
     <ClCompile Include="sct_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sct_selectapplet.cpp">
+    <ClCompile Include="sct_selectbyAID.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sct_selectbyabsolutepath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sct_selectbyfileID.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

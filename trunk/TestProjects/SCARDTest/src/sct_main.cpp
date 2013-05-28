@@ -22,7 +22,6 @@
 
 void testMacNewcardIssue(SCARDHANDLE* phCard);
 void testCardConfusedIssue(SCARDHANDLE* phCard);
-void testFullPathSelect(SCARDHANDLE* phCard);
 void testGetATR(SCARDHANDLE* phCard);
 void testGetATR_2(SCARDHANDLE* phCard);
 void testGetATR_3(SCARDCONTEXT* phCard, WCHAR* readerName);
@@ -68,7 +67,7 @@ int main(int argc, CHAR* argv[])
 	retval = SCardEstablishContext ( SCARD_SCOPE_USER,NULL,NULL,&hContext);
 	if(retval == SCARD_S_SUCCESS)
 	{
-		retval = SCardListReaders(hContext,NULL,(LPSTR)&pBmszReaders,&cchReaders);
+		retval = SCardListReadersA(hContext,NULL,(LPSTR)&pBmszReaders,&cchReaders);
 		if(retval == SCARD_S_SUCCESS)
 		{
 			pfirstReader = pBmszReaders;
@@ -89,19 +88,19 @@ int main(int argc, CHAR* argv[])
 wprintf(L"YAY, released access, waiting for keystroke\n");
 	getchar();*/
 
-				retval = SCardConnect(hContext,pnexttReader,
+				retval = SCardConnectA(hContext,pnexttReader,
 					SCARD_SHARE_SHARED,SCARD_PROTOCOL_T0,&hCard,&dwActiveProtocol);
 
 				if(retval == SCARD_S_SUCCESS)
 				{                
-					//BeidSelectApplet(hCard);
 					GetCardData(hCard);
 					SelectByAID(hCard);
+					SelectByAbsPath(hCard);
+					SelectByFileId(hCard);
 					//testMacNewcardIssue(&hCard);
 					//testCardConfusedIssue(&hCard);
 					//testGetATR(&hCard);
 					//testGetATR_2(&hCard);
-					//testFullPathSelect(&hCard);
 					SCardDisconnect(hCard,SCARD_RESET_CARD);
 				}
 				else
@@ -266,25 +265,6 @@ void testCardConfusedIssue(SCARDHANDLE* phCard)
 	}
 
 	retval = SCardTransmit(*phCard,SCARD_PCI_T0,pbSendBuffer,cbSendLength,NULL, pbRecvBuffer,&cbRecvLength);
-}
-
-void testFullPathSelect(SCARDHANDLE* phCard)
-{
-	BYTE				SW1 = 0x90;
-	BYTE				SW2 = 0x00;
-
-	BYTE pbSendBuffer[] = {0x00 ,0xA4 ,0x08 ,0x0C ,0x04 ,0xDF ,0x01 ,0x40 ,0x31};
-	BYTE pbRecvBuffer[4];
-	DWORD cbSendLength = sizeof(pbSendBuffer);
-	DWORD cbRecvLength = sizeof(pbRecvBuffer);
-	DWORD retval;
-
-	retval = SCardTransmit(*phCard,SCARD_PCI_T0,pbSendBuffer,cbSendLength,NULL, pbRecvBuffer,&cbRecvLength);
-
-	printf ("trying to select EF(ID) by its full path\n");
-	printf ("received: 0x%x 0x%x  len = %d - retval: 0x%08x\n",pbRecvBuffer[0],pbRecvBuffer[1],cbRecvLength, retval);
-	getchar();
-
 }
 
 void testGetATR(SCARDHANDLE* phCard)

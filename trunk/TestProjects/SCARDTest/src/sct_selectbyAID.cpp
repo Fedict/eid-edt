@@ -32,10 +32,10 @@ DWORD SelectByAID(SCARDHANDLE hCard)
 	DWORD dwReturn = SCARD_S_SUCCESS;
 	DWORD dwFunctionReturn = SCARD_S_SUCCESS;
 
-	Log("\SelectAIDApplet\n");
+	Log("\nSelectAIDApplet\n");
 	dwReturn = SelectAIDApplet(hCard);
 
-	Log("\SelectAIDBelpic\n");
+	Log("\nSelectAIDBelpic\n");
 	dwFunctionReturn = SelectAIDBelpic(hCard);
 
 //  only on old beidcards
