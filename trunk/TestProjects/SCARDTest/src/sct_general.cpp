@@ -25,7 +25,7 @@ DWORD SendCommand(SCARDHANDLE hCard, unsigned char* orgCmd, unsigned int orgCmdL
 	bool leNeeded, unsigned char le, 
 	unsigned char *recvbuf, unsigned long *recvlen)
 {
-	DWORD             dwReturn = 0;
+	DWORD             dwReturn = SCARD_S_SUCCESS;
 	SCARD_IO_REQUEST  ioSendPci = {1, sizeof(SCARD_IO_REQUEST)};
 	SCARD_IO_REQUEST  ioRecvPci = {1, sizeof(SCARD_IO_REQUEST)};
 
@@ -71,11 +71,61 @@ DWORD SendCommand(SCARDHANDLE hCard, unsigned char* orgCmd, unsigned int orgCmdL
 		recvlen);
 	if ( dwReturn != SCARD_S_SUCCESS )
 	{
-		LogTrace("SendCommand errorcode: [0x%02X]\n", dwReturn);
+		Log("SendCommand errorcode: [0x%02X]\n", dwReturn);
 	}
 	else
 	{
 		LogApduResp(recvbuf,*recvlen);
 	}
+	return dwReturn;
+}
+
+	
+DWORD HandleResponse(SCARDHANDLE hCard, unsigned char* orgCmd, unsigned int orgCmdLen,
+	bool lcNeeded, unsigned char lc, unsigned char* Data,
+	bool leNeeded, unsigned char le, 
+	unsigned char *recvbuf, unsigned long *recvlen, 
+	unsigned long recvbuflen, const char* testfunctionname)
+{
+	DWORD dwReturn = SCARD_S_SUCCESS;
+	BYTE SW1;
+	BYTE SW2;
+
+if (*recvlen >= 2)
+		{
+			SW1 = recvbuf[(*recvlen)-2];
+			SW2 = recvbuf[(*recvlen)-1];
+
+			//Log("%s returned: SW1 SW2 = [0x%02X][0x%02X]\n",testfunctionname, SW1, SW2);
+			if (SW1 == 0x6c)
+			{
+				*recvlen = recvbuflen;
+				dwReturn = SendCommand(hCard,orgCmd,orgCmdLen,FALSE, 0, NULL, TRUE, SW2, recvbuf, recvlen);
+				if(dwReturn == SCARD_S_SUCCESS ) 
+				{
+					if (*recvlen >= 2)
+					{
+						SW1 = recvbuf[(*recvlen)-2];
+						SW2 = recvbuf[(*recvlen)-1];
+					}
+					else
+					{
+						Log("Error: %s recvlen = %d\n",testfunctionname, *recvlen);
+					}
+				}
+				else
+				{
+					return dwReturn;
+				}
+			}
+			if ( !((SW1 == 0x90) && (SW2 == 0x00)) )
+			{
+				Log("Error: %s returned: SW1 SW2 = [0x%02X][0x%02X]\n",testfunctionname, SW1, SW2);
+			}
+		}
+		else
+		{
+			Log("Error: %s recvlen = %d\n",testfunctionname, *recvlen);
+		}
 	return dwReturn;
 }

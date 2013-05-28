@@ -27,6 +27,9 @@
     <ClCompile Include="sct_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sct_selectapplet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sct_general.h">

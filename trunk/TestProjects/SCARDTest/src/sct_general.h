@@ -25,3 +25,9 @@
 DWORD SendCommand(SCARDHANDLE hCard, unsigned char* orgCmd, unsigned int orgCmdLen,
 	bool lcNeeded, unsigned char lc, unsigned char* Data,
 	bool leNeeded, unsigned char le, unsigned char *recvbuf, unsigned long *recvlen);
+
+DWORD HandleResponse(SCARDHANDLE hCard, unsigned char* orgCmd, unsigned int orgCmdLen,
+	bool lcNeeded, unsigned char lc, unsigned char* Data,
+	bool leNeeded, unsigned char le, 
+	unsigned char *recvbuf, unsigned long *recvlen, 
+	unsigned long recvbuflen, const char* testfunctionname);
