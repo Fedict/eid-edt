@@ -20,17 +20,12 @@
 
 #include "sct_general.h"
 
-DWORD BeidSelectApplet(SCARDHANDLE  pCardData);
 void testMacNewcardIssue(SCARDHANDLE* phCard);
 void testCardConfusedIssue(SCARDHANDLE* phCard);
 void testFullPathSelect(SCARDHANDLE* phCard);
 void testGetATR(SCARDHANDLE* phCard);
 void testGetATR_2(SCARDHANDLE* phCard);
 void testGetATR_3(SCARDCONTEXT* phCard, WCHAR* readerName);
-void testIDAIDSelect(SCARDHANDLE* phCard);
-void testBELPICAIDSelect(SCARDHANDLE* phCard);
-
-DWORD GetCardData(SCARDHANDLE hCard);
 
 void BusySleep(int msecs)
 {
@@ -101,10 +96,9 @@ wprintf(L"YAY, released access, waiting for keystroke\n");
 				{                
 					//BeidSelectApplet(hCard);
 					GetCardData(hCard);
+					SelectByAID(hCard);
 					//testMacNewcardIssue(&hCard);
 					//testCardConfusedIssue(&hCard);
-					//testIDAIDSelect(&hCard);s
-					//testBELPICAIDSelect(&hCard);
 					//testGetATR(&hCard);
 					//testGetATR_2(&hCard);
 					//testFullPathSelect(&hCard);
@@ -112,7 +106,7 @@ wprintf(L"YAY, released access, waiting for keystroke\n");
 				}
 				else
 				{
-					printf("SCardConnect to %s failed\n",pfirstReader);
+					Log("SCardConnect to %s failed\n",pfirstReader);
 				}
 
 				dwTotalLen += strlen(pnexttReader)+1;
@@ -129,17 +123,17 @@ wprintf(L"YAY, released access, waiting for keystroke\n");
 		}
 		else
 		{
-			printf("SCardListReaders failed\n");
+			Log("SCardListReaders failed\n");
 		}
 	}
 	else
 	{
-		printf("SCardEstablishContext failed\n");
+		Log("SCardEstablishContext failed\n");
 	}
 
 	SCardReleaseContext(hContext);
 
-	printf("retval = %d\n",retval);
+	Log("retval = %d\n",retval);
 
 	LogFinalize();
 	getchar();
@@ -274,91 +268,6 @@ void testCardConfusedIssue(SCARDHANDLE* phCard)
 	retval = SCardTransmit(*phCard,SCARD_PCI_T0,pbSendBuffer,cbSendLength,NULL, pbRecvBuffer,&cbRecvLength);
 }
 
-DWORD BeidSelectApplet(SCARDHANDLE  hCard)
-{
-   DWORD             dwReturn = 0;
-
-   SCARD_IO_REQUEST  ioSendPci = {1, sizeof(SCARD_IO_REQUEST)};
-   SCARD_IO_REQUEST  ioRecvPci = {1, sizeof(SCARD_IO_REQUEST)};
-
-   unsigned char     Cmd[128];
-   unsigned int      uiCmdLg = 0;
-
-   unsigned char     recvbuf[256];
-   unsigned long     recvlen = sizeof(recvbuf);
-   BYTE              SW1, SW2;
-   BYTE              bBELPIC_AID[12] = { 0xA0, 0x00, 0x00, 0x01, 0x77, 0x50, 0x4B, 0x43, 0x53, 0x2D, 0x31, 0x35 };  
-   BYTE              cbBELPIC_AID = sizeof(bBELPIC_AID);
-   BYTE				 bAPPLET_AID[15] = { 0xA0, 0x00, 0x00, 0x00, 0x30, 0x29, 0x05, 0x70, 0x00, 0xAD, 0x13, 0x10, 0x01, 0x01, 0xFF };
-   BYTE              cbAPPLET_AID = sizeof(bAPPLET_AID);
-
-   int               i = 0;
-   
-   /***************/
-   /* Select File */
-   /***************/
-   Cmd [0] = 0x00;
-   Cmd [1] = 0xA4; /* SELECT COMMAND */
-   Cmd [2] = 0x04;
-   Cmd [3] = 0x0C;
-   Cmd [4] = cbBELPIC_AID;
-   memcpy(&Cmd[5], bBELPIC_AID, cbBELPIC_AID);
-      
-   uiCmdLg = 5 + cbBELPIC_AID;
-
-   dwReturn = SCardTransmit(hCard, 
-                            &ioSendPci, 
-                            Cmd, 
-                            uiCmdLg, 
-                            &ioRecvPci, 
-                            recvbuf, 
-                            &recvlen);
-   if ( dwReturn != SCARD_S_SUCCESS )
-   {
-      LogTrace("1st SCardTransmit errorcode: [0x%02X]\n", dwReturn);
-	  return(dwReturn);
-   }
-   SW1 = recvbuf[recvlen-2];
-   SW2 = recvbuf[recvlen-1];
-   if ( ( SW1 != 0x90 ) || ( SW2 != 0x00 ) )
-   {
-      LogTrace("Select Failed: [0x%02X][0x%02X] - we try to select the applet aid\n", SW1, SW2);
-
-	  Cmd [0] = 0x00;
-      Cmd [1] = 0xA4; /* SELECT COMMAND */
-      Cmd [2] = 0x04;
-      Cmd [3] = 0x00;
-      Cmd [4] = cbAPPLET_AID;
-      memcpy(&Cmd[5], bAPPLET_AID, cbAPPLET_AID);
-      
-      uiCmdLg = 5 + cbAPPLET_AID;
-      recvlen = sizeof(recvbuf);
-      dwReturn = SCardTransmit(hCard, 
-                            &ioSendPci, 
-                            Cmd, 
-                            uiCmdLg, 
-                            &ioRecvPci, 
-                            recvbuf, 
-                            &recvlen);
-      if ( dwReturn != SCARD_S_SUCCESS )
-      {
-         LogTrace("SCardTransmit errorcode: [0x%02X]\n", dwReturn);
-    	 return (1);
-      }
-	  SW1 = recvbuf[recvlen-2];
-	  SW2 = recvbuf[recvlen-1];
-	  if ( ( SW1 != 0x90 ) || ( SW2 != 0x00 ) )
-	  {
-		LogTrace("Select Failed: [0x%02X][0x%02X]\n", SW1, SW2);
-		return (1);
-	  }
-   }
-   
-	LogTrace("BeidSelectApplet completed!\n");
-   return (dwReturn);
-}
-
-
 void testFullPathSelect(SCARDHANDLE* phCard)
 {
 	BYTE				SW1 = 0x90;
@@ -446,44 +355,4 @@ void testGetATR_3(SCARDCONTEXT* phContext, CHAR* readerName)
 	}
 	printf ("\n");
 
-}
-
-void testIDAIDSelect(SCARDHANDLE* phCard)
-{
-
-//	static const unsigned char APPLET_AID[] = {0xA0,0x00,0x00,0x00,0x30,0x29,0x05,0x70,0x00,0xAD,0x13,0x10,0x01,0x01,0xFF};
-//static const unsigned char BELPIC_AID[] = {0xA0,0x00,0x00,0x01,0x77,0x50,0x4B,0x43,0x53,0x2D,0x31,0x35};
-//static const unsigned char ID_AID[] =     {0xA0,0x00,0x00,0x01,0x77,0x49,0x64,0x46,0x69,0x6C,0x65,0x73};
-
-	BYTE pbSendBuffer[] = {0x00 ,0xA4 ,0x04 ,0x0C , 0x0C ,0xA0,0x00,0x00,0x01,0x77,0x49,0x64,0x46,0x69,0x6C,0x65,0x73};
-	BYTE pbRecvBuffer[4];
-	DWORD cbSendLength = sizeof(pbSendBuffer);
-	DWORD cbRecvLength = sizeof(pbRecvBuffer);
-	DWORD retval;
-
-	retval = SCardTransmit(*phCard,SCARD_PCI_T0,pbSendBuffer,cbSendLength,NULL, pbRecvBuffer,&cbRecvLength);
-
-	printf ("trying to select DF(ID) by its AID\n");
-	printf ("received: 0x%x 0x%x  len = %d - retval: 0x%08x\n",pbRecvBuffer[0],pbRecvBuffer[1],cbRecvLength, retval);
-	getchar();
-}
-
-void testBELPICAIDSelect(SCARDHANDLE* phCard)
-{
-
-//	static const unsigned char APPLET_AID[] = {0xA0,0x00,0x00,0x00,0x30,0x29,0x05,0x70,0x00,0xAD,0x13,0x10,0x01,0x01,0xFF};
-//static const unsigned char BELPIC_AID[] = {0xA0,0x00,0x00,0x01,0x77,0x50,0x4B,0x43,0x53,0x2D,0x31,0x35};
-//static const unsigned char ID_AID[] =     {0xA0,0x00,0x00,0x01,0x77,0x49,0x64,0x46,0x69,0x6C,0x65,0x73};
-
-	BYTE pbSendBuffer[] = {0x00 ,0xA4 ,0x04 ,0x0C , 0x0C ,0xA0,0x00,0x00,0x01,0x77,0x50,0x4B,0x43,0x53,0x2D,0x31,0x35};
-	BYTE pbRecvBuffer[4];
-	DWORD cbSendLength = sizeof(pbSendBuffer);
-	DWORD cbRecvLength = sizeof(pbRecvBuffer);
-	DWORD retval;
-
-	retval = SCardTransmit(*phCard,SCARD_PCI_T0,pbSendBuffer,cbSendLength,NULL, pbRecvBuffer,&cbRecvLength);
-
-	printf ("trying to select DF(BELPIC) by its AID\n");
-	printf ("received: 0x%x 0x%x  len = %d - retval: 0x%08x\n",pbRecvBuffer[0],pbRecvBuffer[1],cbRecvLength, retval);
-	getchar();
 }
