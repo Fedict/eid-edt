@@ -169,6 +169,7 @@
     <ClCompile Include="sct_getcarddata.cpp" />
     <ClCompile Include="sct_log.cpp" />
     <ClCompile Include="sct_main.cpp" />
+    <ClCompile Include="sct_readbinary.cpp" />
     <ClCompile Include="sct_selectbyabsolutepath.cpp" />
     <ClCompile Include="sct_selectbyAID.cpp" />
     <ClCompile Include="sct_selectbyfileID.cpp" />
@@ -177,9 +178,7 @@
     <ClInclude Include="sct_general.h" />
     <ClInclude Include="sct_log.h" />
     <ClInclude Include="sct_main.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ReadMe.txt" />
+    <ClInclude Include="sct_selectbyabsolutepath.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

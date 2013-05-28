@@ -29,3 +29,4 @@ DWORD GetCardData(SCARDHANDLE hCard);
 DWORD SelectByAID(SCARDHANDLE hCard);
 DWORD SelectByAbsPath(SCARDHANDLE hCard);
 DWORD SelectByFileId(SCARDHANDLE hCard);
+DWORD ReadBinaries(SCARDHANDLE hCard);

@@ -36,6 +36,9 @@
     <ClCompile Include="sct_selectbyfileID.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sct_readbinary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sct_general.h">
@@ -47,8 +50,8 @@
     <ClInclude Include="sct_main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ReadMe.txt" />
+    <ClInclude Include="sct_selectbyabsolutepath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
